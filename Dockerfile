@@ -1,23 +1,27 @@
-# 1. Imagem base com JDK 21 e Maven para buildar a aplicação
-FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
-WORKDIR /app
+# Estágio 1: Build clonando direto do GitHub para garantir que os arquivos existam
+FROM maven:3.9.6-eclipse-temurin-21 AS build
+WORKDIR /project
 
-# Copia os arquivos do projeto para o container
-COPY pom.xml .
-COPY src ./src
+# Instala o git caso a imagem não tenha
+RUN apt-get update && apt-get install -y git
 
-# Compila o projeto e gera o arquivo .jar (pulando os testes para ser rápido)
+# Clona o seu repositório diretamente para dentro da pasta de trabalho
+RUN git clone https://github.com/LeynnerRoque/futebol2d.git .
+
+# Executa o empacotamento do Quarkus
 RUN mvn clean package -DskipTests
 
-# 2. Imagem final leve apenas com o JRE para rodar o app
-FROM eclipse-temurin:21-jre-alpine
-WORKDIR /app
+# Estágio 2: Runtime (Usando JRE 21)
+FROM eclipse-temurin:21-jre
+ENV LANGUAGE='en_US:en'
+WORKDIR /deployments
 
-# Copia o JAR gerado do estágio anterior
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /project/target/quarkus-app/lib/ /deployments/lib/
+COPY --from=build /project/target/quarkus-app/*.jar /deployments/
+COPY --from=build /project/target/quarkus-app/app/ /deployments/app/
+COPY --from=build /project/target/quarkus-app/quarkus/ /deployments/quarkus/
 
-# Porta padrão (o Render sobrescreve via variável $PORT se necessário)
 EXPOSE 8080
+USER 185
 
-# Comando para iniciar a aplicação
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Dquarkus.http.host=0.0.0.0", "-Djava.util.logging.manager=org.jboss.logmanager.LogManager", "-jar", "/deployments/quarkus-run.jar"]
