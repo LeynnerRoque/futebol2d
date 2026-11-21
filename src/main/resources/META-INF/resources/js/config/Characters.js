@@ -1,0 +1,143 @@
+export const FRIENDS = ['Sergio', 'Elias', 'Lucas', 'Helinho', 'Leo'];
+
+export const WEATHER_MODES = {
+    sunny: {
+        id: 'sunny',
+        label: 'ENSOLARADO',
+        isNight: false,
+        isRaining: false
+    },
+    day_rain: {
+        id: 'day_rain',
+        label: 'CHUVA DE DIA',
+        isNight: false,
+        isRaining: true
+    },
+    night: {
+        id: 'night',
+        label: 'NOITE',
+        isNight: true,
+        isRaining: false
+    },
+    night_rain: {
+        id: 'night_rain',
+        label: 'NOITE COM CHUVA',
+        isNight: true,
+        isRaining: true
+    }
+};
+
+export const CHARACTER_DB = {
+    Sergio: {
+        name: 'Sergio',
+        skin: '#b87a4b',
+        hairColor: '#1e1b18',
+        hatColor: '#1e293b',
+        shirtColor: null,
+        shirtNumber: null,
+        shortsColor: '#111827',
+        shortsPattern: 'solid',
+        accel: 0.56,
+        maxSpeed: 4.3,
+        kickPower: 13.5,
+        shotAccuracy: 0.96,
+        passAccuracy: 0.98,
+        dribbleSkill: 1.45,
+        stealPower: 1.0,
+        unlockType: 'touches',
+        unlockTarget: 2,
+        specialName: 'Drible Elétrico & Chute Direto',
+        specialDesc: 'Libera após 2 toques na bola — Chute vai direto no gol!',
+        celebration: 'spin_punch'
+    },
+    Helinho: {
+        name: 'Helinho',
+        skin: '#f5d0a9',
+        hairColor: '#27272a',
+        hatColor: null,
+        shirtColor: '#172554',
+        longSleeve: true,
+        shirtNumber: '72',
+        shortsColor: '#1e3a8a',
+        shortsPattern: 'solid',
+        accel: 0.66,
+        maxSpeed: 5.1,
+        kickPower: 13.0,
+        shotAccuracy: 0.85,
+        passAccuracy: 0.85,
+        dribbleSkill: 1.0,
+        stealPower: 1.0,
+        unlockType: 'energy',
+        unlockTarget: 100,
+        specialName: 'Turbo Total / Lançamento #72',
+        specialDesc: 'Turbo gasta energia; após 1 gol libera lançamento direto!',
+        celebration: 'run_air_kick'
+    },
+    Lucas: {
+        name: 'Lucas',
+        skin: '#f8d9c0',
+        hairColor: '#292524',
+        hatColor: '#84cc16',
+        shirtColor: null,
+        shirtNumber: null,
+        shortsColor: '#38bdf8',
+        shortsPattern: 'solid',
+        accel: 0.62,
+        maxSpeed: 4.7,
+        kickPower: 16.5,
+        shotAccuracy: 0.94,
+        passAccuracy: 0.82,
+        dribbleSkill: 0.0,
+        stealPower: 1.65,
+        unlockType: 'goals',
+        unlockTarget: 1,
+        specialName: 'Bomba de Abacate Direta',
+        specialDesc: 'Libera após 1 gol — Chute vai direto no gol + roubada forte!',
+        celebration: 'avocado_rain'
+    },
+    Elias: {
+        name: 'Elias',
+        skin: '#f8d9c0',
+        hairColor: '#1c1917',
+        curlyHair: true,
+        hatColor: null,
+        shirtColor: null,
+        shirtNumber: null,
+        shortsColor: '#f43f5e',
+        shortsPattern: 'floral',
+        accel: 0.65,
+        maxSpeed: 4.9,
+        kickPower: 13.8,
+        shotAccuracy: 0.95,
+        passAccuracy: 0.35,
+        dribbleSkill: 1.5,
+        stealPower: 1.0,
+        unlockType: 'goals',
+        unlockTarget: 1,
+        specialName: 'Drible Sambado & Gol Direto',
+        specialDesc: 'Libera após 1 gol — Drible ágil + chute direto no gol!',
+        celebration: 'slow_pushups'
+    },
+    Leo: {
+        name: 'Leo',
+        skin: '#e8be9e',
+        hairColor: '#09090b',
+        hatColor: null,
+        shirtColor: '#111827',
+        shirtNumber: null,
+        shortsColor: '#09090b',
+        shortsPattern: 'solid',
+        accel: 0.42,
+        maxSpeed: 4.4,
+        kickPower: 13.2,
+        shotAccuracy: 0.84,
+        passAccuracy: 0.99,
+        dribbleSkill: 0.9,
+        stealPower: 1.55,
+        unlockType: 'goals',
+        unlockTarget: 1,
+        specialName: 'Muralha & Chute Direto',
+        specialDesc: 'Libera após 1 gol — Defesa forte + chute direto no gol!',
+        celebration: 'vacuum_suck'
+    }
+};
