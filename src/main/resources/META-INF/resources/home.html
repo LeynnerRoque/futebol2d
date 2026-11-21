@@ -1,0 +1,2375 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Futebol a Banca 8 - Futebol de Rua 2x2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Chakra+Petch:wght@600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --panel-bg: #161e31;
+      --accent-gold: #facc15;
+      --team-blue: #3b82f6;
+      --team-red: #ef4444;
+      --text-light: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      image-rendering: pixelated;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      font-family: 'Chakra Petch', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      overflow-x: hidden;
+    }
+
+    .pixel-font {
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* HUD Superior 8-Bits */
+    .scoreboard-bar {
+      width: 100%;
+      background: var(--panel-bg);
+      border: 4px solid #334155;
+      box-shadow: 0 6px 0 #020617;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .team-hud {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .team-tag {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #fff;
+    }
+
+    .team-names {
+      font-size: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .score-box {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1.4rem;
+      background: #090d16;
+      color: var(--accent-gold);
+      padding: 8px 14px;
+      border: 3px solid #475569;
+    }
+
+    .center-hud {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .timer-panel {
+      background: #090d16;
+      border: 3px solid #475569;
+      padding: 6px 14px;
+      text-align: center;
+    }
+
+    .timer-digits {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1.1rem;
+      color: #fff;
+    }
+
+    .timer-digits.golden {
+      color: #facc15;
+      animation: blink 0.7s infinite alternate;
+    }
+
+    @keyframes blink {
+      from { opacity: 0.6; }
+      to { opacity: 1; }
+    }
+
+    .timer-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+      text-transform: uppercase;
+    }
+
+    .bench-pill {
+      background: #1e293b;
+      border: 2px solid var(--accent-gold);
+      padding: 5px 10px;
+      font-size: 0.82rem;
+      color: #fde047;
+      text-align: center;
+    }
+
+    /* Barra de Especial do Jogador Controlado */
+    .special-hud-bar {
+      width: 100%;
+      background: #0f172a;
+      border: 3px solid #334155;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .energy-meter-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .energy-bar-bg {
+      flex: 1;
+      height: 18px;
+      background: #020617;
+      border: 2px solid #64748b;
+      position: relative;
+    }
+
+    .energy-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #eab308, #22c55e);
+      transition: width 0.1s linear;
+    }
+
+    .energy-bar-fill.ready {
+      background: linear-gradient(90deg, #facc15, #f97316, #ef4444);
+      box-shadow: 0 0 12px #facc15;
+    }
+
+    /* Canvas Wrapper */
+    .game-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      max-height: 66vh;
+      border: 4px solid #475569;
+      box-shadow: 0 12px 0 #020617;
+      background: #1e293b;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Overlays */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 15, 25, 0.92);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 20;
+      overflow-y: auto;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .arcade-card {
+      background: #161e31;
+      border: 4px solid #475569;
+      box-shadow: 0 8px 0 #020617;
+      padding: 18px;
+      width: 100%;
+      max-width: 880px;
+    }
+
+    .arcade-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(1rem, 2.3vw, 1.5rem);
+      color: var(--accent-gold);
+      text-align: center;
+      text-shadow: 3px 3px 0 #9a3412;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    .arcade-sub {
+      text-align: center;
+      color: #cbd5e1;
+      font-size: 0.92rem;
+      margin-bottom: 14px;
+    }
+
+    /* Fichas dos 5 Personagens */
+    .roster-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 820px) {
+      .roster-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .char-card {
+      background: #0f172a;
+      border: 2px solid #334155;
+      padding: 8px;
+      font-size: 0.76rem;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .char-card strong {
+      color: var(--accent-gold);
+      font-size: 0.9rem;
+      display: block;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 3px;
+    }
+
+    .char-card span.spec {
+      color: #4ade80;
+    }
+
+    .char-card span.weak {
+      color: #f87171;
+    }
+
+    .teams-setup {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .teams-setup {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .team-box {
+      background: #0f172a;
+      border: 2px solid #334155;
+      padding: 10px;
+    }
+
+    .team-box h3 {
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .select-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .role-badge {
+      background: #1e293b;
+      padding: 5px 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      min-width: 72px;
+      text-align: center;
+      border: 1px solid #475569;
+    }
+
+    select {
+      flex: 1;
+      background: #1e293b;
+      color: #fff;
+      border: 2px solid #475569;
+      padding: 6px 8px;
+      font-family: 'Chakra Petch', sans-serif;
+      font-weight: 700;
+      font-size: 0.92rem;
+      cursor: pointer;
+    }
+
+    .bench-notice {
+      background: rgba(250, 204, 21, 0.12);
+      border: 2px dashed var(--accent-gold);
+      padding: 8px 12px;
+      text-align: center;
+      margin-bottom: 12px;
+      font-size: 0.92rem;
+    }
+
+    .btn-arcade {
+      width: 100%;
+      padding: 14px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.95rem;
+      color: #090d16;
+      background: #facc15;
+      border: 4px solid #fef08a;
+      box-shadow: 0 5px 0 #a16207;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    .btn-arcade:hover {
+      background: #fde047;
+    }
+
+    .btn-arcade:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #a16207;
+    }
+
+    .swap-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 12px 0;
+    }
+
+    .btn-kickout {
+      background: #0f172a;
+      border: 3px solid #ef4444;
+      color: #fff;
+      padding: 12px;
+      font-family: 'Chakra Petch', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .btn-kickout:hover {
+      background: #ef4444;
+      color: #090d16;
+    }
+
+    /* Banner de Gol */
+    .goal-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 15;
+    }
+
+    .goal-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(2rem, 6vw, 4rem);
+      color: #facc15;
+      text-shadow: 4px 4px 0 #b91c1c, -2px -2px 0 #000;
+      animation: bounceGoal 0.4s infinite alternate;
+    }
+
+    .goal-sub {
+      background: #090d16;
+      border: 3px solid #facc15;
+      padding: 6px 16px;
+      margin-top: 10px;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    @keyframes bounceGoal {
+      from { transform: scale(0.95); }
+      to { transform: scale(1.06); }
+    }
+
+    /* Barra Inferior de Controles */
+    .controls-footer {
+      width: 100%;
+      background: var(--panel-bg);
+      border: 3px solid #334155;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.84rem;
+    }
+
+    kbd {
+      background: #090d16;
+      border: 1px solid #64748b;
+      border-bottom-width: 3px;
+      padding: 2px 6px;
+      color: var(--accent-gold);
+      font-weight: 700;
+    }
+
+    .btn-mini {
+      background: #334155;
+      color: #fff;
+      border: 2px solid #475569;
+      padding: 5px 10px;
+      font-family: 'Chakra Petch', sans-serif;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-mini:hover {
+      background: #475569;
+    }
+
+    /* Touch Mobile */
+    .mobile-pad {
+      display: none;
+      width: 100%;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 10px;
+    }
+
+    @media (pointer: coarse) {
+      .mobile-pad { display: flex; }
+      .desktop-hints { display: none; }
+    }
+
+    .joy-base {
+      width: 100px;
+      height: 100px;
+      background: rgba(255,255,255,0.1);
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      position: relative;
+      touch-action: none;
+    }
+
+    .joy-stick {
+      width: 40px;
+      height: 40px;
+      background: var(--accent-gold);
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .mobile-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .m-btn {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      font-family: 'Chakra Petch', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #fff;
+      border: 3px solid #fff;
+      touch-action: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Placar Superior -->
+  <div class="scoreboard-bar">
+    <div class="team-hud">
+      <span class="team-tag" style="background: #3b82f6;"></span>
+      <span class="team-names" id="hudBlueNames">Sergio & Elias</span>
+      <span class="score-box" id="scoreBlue">0</span>
+    </div>
+
+    <div class="center-hud">
+      <div class="timer-panel">
+        <div class="timer-digits" id="matchTimer">02:00</div>
+        <div class="timer-label" id="timerSubLabel">RUA RESIDENCIAL</div>
+      </div>
+      <div class="bench-pill">
+        <div style="font-size:0.65rem; color:#cbd5e1;">DE FORA (PRÓXIMO)</div>
+        <strong id="hudBenchName">Leo</strong>
+      </div>
+    </div>
+
+    <div class="team-hud">
+      <span class="score-box" id="scoreRed">0</span>
+      <span class="team-names" id="hudRedNames">Lucas & Helinho</span>
+      <span class="team-tag" style="background: #ef4444;"></span>
+    </div>
+  </div>
+
+  <!-- Barra de Energia e Especial -->
+  <div class="special-hud-bar">
+    <div class="energy-meter-wrap">
+      <span style="font-weight:700; color:#facc15;" id="p1HudTitle">⚡ SERGIO:</span>
+      <div class="energy-bar-bg">
+        <div class="energy-bar-fill" id="p1EnergyFill"></div>
+      </div>
+      <span style="font-size:0.82rem; font-weight:700;" id="p1SpecialStatus">Carregando...</span>
+    </div>
+    <div style="font-size:0.82rem; color:#cbd5e1;" id="p1SpecialDesc">
+      Especial [E]: Drible Elétrico + Chute Preciso
+    </div>
+  </div>
+
+  <!-- Campo 2D 8-Bits -->
+  <div class="game-wrapper">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Banner de Gol e Comemoração -->
+    <div id="goalBanner" class="goal-overlay hidden">
+      <div class="goal-title">GOOOOL!</div>
+      <div class="goal-sub" id="goalScorerLabel">Golaço!</div>
+    </div>
+
+    <!-- Tela de Seleção (Lobby 8-Bits) -->
+    <div id="lobbyOverlay" class="overlay">
+      <div class="arcade-card">
+        <div class="arcade-title">⚽ Futebol 8-BITS DA RUA</div>
+        <div class="arcade-sub">Escolha sua dupla!</div>
+
+        <!-- Ficha técnica dos 5 amigos
+        <div class="roster-grid">
+          <div class="char-card">
+            <strong>SERGIO</strong>
+            <span>Boné p/ trás, sem camisa, shorts preto</span>
+            <span class="spec">★ Drible rápido + Chute/Passe preciso</span>
+            <span class="weak">▼ Vel. moderada</span>
+          </div>
+          <div class="char-card">
+            <strong>HELINHO #72</strong>
+            <span>Manga longa azul marinho 72, cabelo liso</span>
+            <span class="spec">★ Turbo Veloz (após 1 gol: Lançamento)</span>
+            <span class="weak">▼ Turbo gasta toda energia</span>
+          </div>
+          <div class="char-card">
+            <strong>LUCAS</strong>
+            <span>Boné verde abacate p/ trás, shorts azul</span>
+            <span class="spec">★ Chute canhão + Roubada forte</span>
+            <span class="weak">▼ Sem dribles</span>
+          </div>
+          <div class="char-card">
+            <strong>ELIAS</strong>
+            <span>Cabelo enrolado, sem camisa, shorts florido</span>
+            <span class="spec">★ Dribles + Gols com precisão</span>
+            <span class="weak">▼ Passes errados</span>
+          </div>
+          <div class="char-card">
+            <strong>LEO</strong>
+            <span>Camisa e shorts pretos, cabelo liso</span>
+            <span class="spec">★ Passe preciso + Defesa muralha</span>
+            <span class="weak">▼ Arrancada lenta</span>
+          </div>
+        </div>-->
+
+        <!-- Seleção das Duplas -->
+        <div class="teams-setup">
+          <div class="team-box">
+            <h3 style="color:#60a5fa;">Sua Dupla (Time Azul)</h3>
+            <div class="select-row">
+              <span class="role-badge">VOCÊ (P1)</span>
+              <select id="p1Select"></select>
+            </div>
+            <div class="select-row">
+              <span class="role-badge">PARCEIRO</span>
+              <select id="p2Select"></select>
+            </div>
+          </div>
+
+          <div class="team-box">
+            <h3 style="color:#f87171;">Dupla Rival (Time Vermelho)</h3>
+            <div class="select-row">
+              <span class="role-badge">RIVAL 1</span>
+              <select id="p3Select"></select>
+            </div>
+            <div class="select-row">
+              <span class="role-badge">RIVAL 2</span>
+              <select id="p4Select"></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="bench-notice">
+          🪑 Na calçada aguardando a vez: <strong id="lobbyBenchName" style="color:#facc15;">Leo</strong>
+        </div>
+
+        <button class="btn-arcade" id="startBtn">APITAR INÍCIO DE JOGO! ⚽</button>
+      </div>
+    </div>
+
+    <!-- Tela de Fim de Jogo e Troca dos 5 Amigos -->
+    <div id="gameOverOverlay" class="overlay hidden">
+      <div class="arcade-card" style="max-width: 560px; text-align: center;">
+        <div class="arcade-title" id="endTitle">FIM DE JOGO!</div>
+        <p style="font-size: 1.1rem; margin: 10px 0;" id="endScoreText">Sergio & Elias 2 x 1 Lucas & Helinho</p>
+
+        <div id="swapPanel" style="background:#0f172a; border:2px solid #475569; padding:12px; margin:12px 0;">
+          <p id="swapMessage" style="font-size:0.95rem; line-height:1.4;"></p>
+          <div id="loseButtons" class="swap-grid hidden">
+            <button class="btn-kickout" id="btnRemoveP1">Tirar P1</button>
+            <button class="btn-kickout" id="btnRemoveP2">Tirar P2</button>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <button class="btn-arcade" id="nextMatchBtn">PRÓXIMA PARTIDA! ⚽</button>
+          <button class="btn-mini" id="backLobbyBtn" style="padding:12px;">ESCALAÇÃO</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controles Touch Celular -->
+  <div class="mobile-pad">
+    <div class="joy-base" id="joyBase">
+      <div class="joy-stick" id="joyStick"></div>
+    </div>
+    <div class="mobile-btns">
+      <button class="m-btn" id="mPassBtn" style="background:#2563eb;">PASSE</button>
+      <button class="m-btn" id="mSpecBtn" style="background:#eab308; color:#000;">ESP.</button>
+      <button class="m-btn" id="mKickBtn" style="background:#dc2626;">CHUTE</button>
+    </div>
+  </div>
+
+  <!-- Rodapé de Controles -->
+  <div class="controls-footer">
+    <div class="desktop-hints">
+      <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Mover •
+      <kbd>ESPAÇO</kbd> Chutar / Roubar •
+      <kbd>C</kbd> Passe •
+      <kbd>E</kbd> <strong>ESPECIAL</strong>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn-mini" id="soundBtn">🔊 SOM: ON</button>
+      <button class="btn-mini" id="ballDropBtn">🔄 BOLA AO CHÃO</button>
+      <button class="btn-mini" id="lobbyBtn">⚙️ ESCALAÇÃO</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // =========================================================
+  // 1. DEFINIÇÃO DOS 5 AMIGOS (ATRIBUTOS, VISUAL E ESPECIAIS)
+  // =========================================================
+  const FRIENDS = ['Sergio', 'Elias', 'Lucas', 'Helinho', 'Leo'];
+
+  const CHARACTER_DB = {
+    'Sergio': {
+      name: 'Sergio',
+      skin: '#b87a4b',       // Marrom claro
+      hairColor: '#1e1b18',
+      hatColor: '#1e293b',   // Boné escuro virado para trás
+      shirtColor: null,      // Sem camisa
+      shirtNumber: null,
+      shortsColor: '#111827',// Shorts preto
+      shortsPattern: 'solid',
+      // Atributos equilibrados pela ficha:
+      accel: 0.56,           // Velocidade moderada (deficiência)
+      maxSpeed: 4.3,
+      kickPower: 13.5,
+      shotAccuracy: 0.96,    // Chutes no gol com precisão
+      passAccuracy: 0.98,    // Passes com precisão
+      dribbleSkill: 1.45,    // Dribles rápidos
+      stealPower: 1.0,
+      specialName: 'Drible Elétrico & Chute Cirúrgico',
+      specialDesc: 'Drible rápido + Chute/Passe teleguiado no ângulo!',
+      celebration: 'spin_punch' // Rodopio com soco no ar
+    },
+    'Helinho': {
+      name: 'Helinho',
+      skin: '#f5d0a9',       // Pele clara amarelada
+      hairColor: '#27272a',  // Cabelo liso arredondado
+      hatColor: null,
+      shirtColor: '#172554', // Manga longa azul marinho escuro
+      longSleeve: true,
+      shirtNumber: '72',
+      shortsColor: '#1e3a8a',
+      shortsPattern: 'solid',
+      accel: 0.66,
+      maxSpeed: 5.1,
+      kickPower: 13.0,
+      shotAccuracy: 0.85,
+      passAccuracy: 0.85,
+      dribbleSkill: 1.0,
+      stealPower: 1.0,
+      specialName: 'Turbo Total / Lançamento #72',
+      specialDesc: 'Gasta toda energia p/ correr muito! Após 1 gol: Lançamento preciso!',
+      celebration: 'run_air_kick' // Corrida e chute no ar
+    },
+    'Lucas': {
+      name: 'Lucas',
+      skin: '#f8d9c0',       // Pele clara
+      hairColor: '#292524',
+      hatColor: '#84cc16',   // Boné verde abacate virado para trás
+      shirtColor: null,      // Sem camisa
+      shirtNumber: null,
+      shortsColor: '#38bdf8',// Shorts azul claro
+      shortsPattern: 'solid',
+      accel: 0.62,
+      maxSpeed: 4.7,
+      kickPower: 16.5,       // Chutes fortes
+      shotAccuracy: 0.94,    // Precisão no gol
+      passAccuracy: 0.82,
+      dribbleSkill: 0.0,     // Deficiência: sem dribles
+      stealPower: 1.65,      // Força nas roubadas de bola
+      specialName: 'Bomba de Abacate & Trator',
+      specialDesc: 'Chute canhão teleguiado + Roubada de bola demolidora!',
+      celebration: 'avocado_rain' // Abacates caem do poste de energia
+    },
+    'Elias': {
+      name: 'Elias',
+      skin: '#f8d9c0',       // Pele clara
+      hairColor: '#1c1917',
+      curlyHair: true,       // Cabelos enrolados
+      hatColor: null,
+      shirtColor: null,      // Sem camisa
+      shirtNumber: null,
+      shortsColor: '#f43f5e',// Shorts floridos
+      shortsPattern: 'floral',
+      accel: 0.65,
+      maxSpeed: 4.9,
+      kickPower: 13.8,
+      shotAccuracy: 0.95,    // Gols com precisão
+      passAccuracy: 0.35,    // Deficiência: passes errados!
+      dribbleSkill: 1.5,     // Especial: dribles
+      stealPower: 1.0,
+      specialName: 'Drible Sambado & Gol Letal',
+      specialDesc: 'Drible desconcertante + Finalização mortal (cuidado ao passar!)',
+      celebration: 'slow_pushups' // Corrida lenta com flexões no chão
+    },
+    'Leo': {
+      name: 'Leo',
+      skin: '#e8be9e',
+      hairColor: '#09090b',  // Cabelo liso
+      hatColor: null,
+      shirtColor: '#111827', // Camisa preta
+      shirtNumber: null,
+      shortsColor: '#09090b',// Shorts preto
+      shortsPattern: 'solid',
+      accel: 0.42,           // Deficiência: lentidão para arrancadas
+      maxSpeed: 4.4,
+      kickPower: 13.2,
+      shotAccuracy: 0.84,
+      passAccuracy: 0.99,    // Passes com precisão
+      dribbleSkill: 0.9,
+      stealPower: 1.55,      // Defesas apuradas
+      specialName: 'Muralha & Passe Cirúrgico',
+      specialDesc: 'Escudo defensivo magnético + Passe teleguiado no pé!',
+      celebration: 'vacuum_suck' // Suga o ar e todos no campo caem
+    }
+  };
+
+  // =========================================================
+  // 2. ÁUDIO 8-BITS CHIPTUNE (Web Audio API)
+  // =========================================================
+  class RetroAudio {
+    constructor() {
+      this.ctx = null;
+      this.muted = false;
+    }
+
+    init() {
+      if (!this.ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AC();
+      }
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+    }
+
+    tone(freq, dur, type = 'square', vol = 0.15, delay = 0) {
+      if (this.muted) return;
+      this.init();
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime + delay);
+      gain.gain.setValueAtTime(vol, this.ctx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.005, this.ctx.currentTime + delay + dur);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(this.ctx.currentTime + delay);
+      osc.stop(this.ctx.currentTime + delay + dur);
+    }
+
+    kick() { this.tone(150, 0.12, 'triangle', 0.35); }
+    post() { this.tone(480, 0.18, 'square', 0.22); }
+    special() {
+      this.tone(330, 0.1, 'square', 0.2, 0);
+      this.tone(495, 0.1, 'square', 0.2, 0.08);
+      this.tone(660, 0.22, 'square', 0.25, 0.16);
+    }
+    whistle(long = false) {
+      const d = long ? 0.55 : 0.22;
+      this.tone(2600, d, 'square', 0.12);
+    }
+    goal() {
+      const notes = [261.6, 329.6, 392.0, 523.2, 659.2];
+      notes.forEach((n, i) => this.tone(n, 0.18, 'square', 0.18, i * 0.08));
+    }
+    suckWind() {
+      if (this.muted) return;
+      this.init();
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(120, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(620, this.ctx.currentTime + 0.9);
+      gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.95);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.96);
+    }
+  }
+  const sfx = new RetroAudio();
+
+  // =========================================================
+  // 3. ESTADO GLOBAL DO JOGO E AMBIENTE DE RUA
+  // =========================================================
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+
+  const W = 1200;
+  const H = 675;
+
+  // Limites da Rua (Asfalto entre calçadas superior e inferior)
+  const ROAD_TOP = 148;
+  const ROAD_BOTTOM = 595;
+  const FIELD_LEFT = 85;
+  const FIELD_RIGHT = 1115;
+  const GOAL_H = 48;
+
+  const state = {
+    screen: 'LOBBY',
+    timeLeft: 120,
+    isGoldenGoal: false,
+    scoreBlue: 0,
+    scoreRed: 0,
+    lineup: { p1: 'Sergio', p2: 'Elias', p3: 'Lucas', p4: 'Helinho', bench: 'Leo' },
+    lastTouch: null,
+    goalTimer: 0,
+    celebratingPlayer: null,
+    celebrationType: null,
+    particles: [],
+    avocados: [], // Abacates do especial/comemoração do Lucas
+    npcs: [],
+    keys: {},
+    touchVec: { x: 0, y: 0 }
+  };
+
+  let players = [];
+  const ball = { x: W / 2, y: (ROAD_TOP + ROAD_BOTTOM) / 2, vx: 0, vy: 0, radius: 12, spin: 0, superShot: false };
+
+  // =========================================================
+  // 4. NPCS DA CALÇADA (2 LOIRAS, 1 RUIVA, CARECA BARRIGUDO, SENTADO NA CADEIRA)
+  // =========================================================
+  function initStreetNPCs() {
+    state.npcs = [
+      {
+        id: 'blonde1',
+        type: 'woman',
+        hair: '#facc15',
+        dress: '#ec4899',
+        skin: '#fbd5b5',
+        x: 190,
+        y: 112,
+        vx: 0.55,
+        dir: 1,
+        cheerTimer: 0,
+        walkPhase: 0
+      },
+      {
+        id: 'blonde2',
+        type: 'woman',
+        hair: '#fde047',
+        dress: '#a855f7',
+        skin: '#f8d9c0',
+        x: 780,
+        y: 115,
+        vx: -0.48,
+        dir: -1,
+        cheerTimer: 0,
+        walkPhase: 2
+      },
+      {
+        id: 'redhead',
+        type: 'woman',
+        hair: '#ea580c',
+        dress: '#10b981',
+        skin: '#ffe4c4',
+        x: 470,
+        y: 625,
+        vx: 0.62,
+        dir: 1,
+        cheerTimer: 0,
+        walkPhase: 1
+      },
+      {
+        id: 'bald_belly',
+        type: 'bald_belly',
+        shirt: '#f8fafc',
+        shorts: '#475569',
+        skin: '#e0ac69',
+        x: 920,
+        y: 622,
+        vx: -0.38,
+        dir: -1,
+        cheerTimer: 0,
+        walkPhase: 0.5
+      },
+      {
+        id: 'chair_guy',
+        type: 'chair_guy',
+        shirt: '#f97316',
+        shorts: '#1e3a8a',
+        skin: '#d2996c',
+        x: 565,
+        y: 108,
+        vx: 0,
+        dir: 1,
+        cheerTimer: 0,
+        walkPhase: 0
+      }
+    ];
+  }
+
+  function updateNPCs(dt) {
+    state.npcs.forEach(npc => {
+      if (npc.cheerTimer > 0) {
+        npc.cheerTimer -= dt;
+      }
+      if (npc.type !== 'chair_guy') {
+        // Anda pela calçada quando não está comemorando
+        const speedMult = npc.cheerTimer > 0 ? 0.2 : 1;
+        npc.x += npc.vx * speedMult;
+        npc.walkPhase += dt * 7;
+
+        if (npc.x < 120) {
+          npc.x = 120;
+          npc.vx = Math.abs(npc.vx);
+          npc.dir = 1;
+        } else if (npc.x > W - 120) {
+          npc.x = W - 120;
+          npc.vx = -Math.abs(npc.vx);
+          npc.dir = -1;
+        }
+      }
+    });
+  }
+
+  function triggerNPCGoalReaction() {
+    state.npcs.forEach(npc => {
+      npc.cheerTimer = 3.2;
+    });
+  }
+
+  // =========================================================
+  // 5. ESCALAÇÃO DOS 5 AMIGOS
+  // =========================================================
+  const selectIds = ['p1Select', 'p2Select', 'p3Select', 'p4Select'];
+
+  function initSelects() {
+    const defaults = ['Sergio', 'Elias', 'Lucas', 'Helinho'];
+    selectIds.forEach((id, i) => {
+      const el = document.getElementById(id);
+      el.innerHTML = '';
+      FRIENDS.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        if (name === defaults[i]) opt.selected = true;
+        el.appendChild(opt);
+      });
+      el.addEventListener('change', (e) => {
+        const chosen = e.target.value;
+        const currentVals = selectIds.map(sid => document.getElementById(sid).value);
+        const freeFriend = FRIENDS.find(f => !currentVals.includes(f));
+        selectIds.forEach(sid => {
+          if (sid !== id && document.getElementById(sid).value === chosen && freeFriend) {
+            document.getElementById(sid).value = freeFriend;
+          }
+        });
+        syncLineup();
+      });
+    });
+    syncLineup();
+  }
+
+  function syncLineup() {
+    state.lineup.p1 = document.getElementById('p1Select').value;
+    state.lineup.p2 = document.getElementById('p2Select').value;
+    state.lineup.p3 = document.getElementById('p3Select').value;
+    state.lineup.p4 = document.getElementById('p4Select').value;
+    const playing = [state.lineup.p1, state.lineup.p2, state.lineup.p3, state.lineup.p4];
+    state.lineup.bench = FRIENDS.find(f => !playing.includes(f)) || 'Leo';
+
+    document.getElementById('lobbyBenchName').textContent = state.lineup.bench;
+    document.getElementById('hudBenchName').textContent = state.lineup.bench;
+  }
+
+  function syncDropdownsFromLineup() {
+    document.getElementById('p1Select').value = state.lineup.p1;
+    document.getElementById('p2Select').value = state.lineup.p2;
+    document.getElementById('p3Select').value = state.lineup.p3;
+    document.getElementById('p4Select').value = state.lineup.p4;
+    document.getElementById('lobbyBenchName').textContent = state.lineup.bench;
+    document.getElementById('hudBenchName').textContent = state.lineup.bench;
+  }
+
+  // =========================================================
+  // 6. CRIAÇÃO DOS JOGADORES EM CAMPO
+  // =========================================================
+  function spawnPlayers() {
+    const { p1, p2, p3, p4, bench } = state.lineup;
+    document.getElementById('hudBlueNames').textContent = `${p1} & ${p2}`;
+    document.getElementById('hudRedNames').textContent = `${p3} & ${p4}`;
+    document.getElementById('hudBenchName').textContent = bench;
+
+    const midY = (ROAD_TOP + ROAD_BOTTOM) / 2;
+
+    const configs = [
+      { name: p1, team: 'blue', isHuman: true, x: 360, y: midY - 60 },
+      { name: p2, team: 'blue', isHuman: false, x: 260, y: midY + 75 },
+      { name: p3, team: 'red', isHuman: false, x: 840, y: midY - 60 },
+      { name: p4, team: 'red', isHuman: false, x: 940, y: midY + 75 }
+    ];
+
+    players = configs.map((cfg, idx) => ({
+      id: idx + 1,
+      name: cfg.name,
+      stats: CHARACTER_DB[cfg.name],
+      team: cfg.team,
+      isHuman: cfg.isHuman,
+      x: cfg.x,
+      y: cfg.y,
+      vx: 0,
+      vy: 0,
+      facing: cfg.team === 'blue' ? 1 : -1,
+      radius: 20,
+      energy: 50,          // 0 a 100
+      specialActive: 0,    // Timer do especial ativo
+      dribbleTimer: 0,
+      kickCooldown: 0,
+      fallenTimer: 0,      // Usado quando o Leo suga o ar e derruba todo mundo!
+      goals: 0,
+      animFrame: 0
+    }));
+
+    updateSpecialHUD();
+  }
+
+  function resetPositions(concedingTeam = null) {
+    const midY = (ROAD_TOP + ROAD_BOTTOM) / 2;
+    ball.x = W / 2;
+    ball.y = midY;
+    ball.vx = 0;
+    ball.vy = 0;
+    ball.superShot = false;
+    state.lastTouch = null;
+    state.celebratingPlayer = null;
+    state.celebrationType = null;
+
+    const spots = [
+      { x: concedingTeam === 'blue' ? 520 : 370, y: midY - 40 },
+      { x: 250, y: midY + 75 },
+      { x: concedingTeam === 'red' ? 680 : 830, y: midY - 40 },
+      { x: 950, y: midY + 75 }
+    ];
+
+    players.forEach((p, i) => {
+      p.x = spots[i].x;
+      p.y = spots[i].y;
+      p.vx = 0;
+      p.vy = 0;
+      p.fallenTimer = 0;
+      p.specialActive = 0;
+    });
+  }
+
+  // =========================================================
+  // 7. CONTROLES & HABILIDADES ESPECIAIS
+  // =========================================================
+  window.addEventListener('keydown', (e) => {
+    state.keys[e.code] = true;
+    if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code) && state.screen === 'PLAYING') {
+      e.preventDefault();
+    }
+    if (state.screen === 'PLAYING') {
+      const p1 = players[0];
+      if (e.code === 'KeyE' || e.code === 'ShiftLeft') activateSpecial(p1);
+      if (e.code === 'KeyC') performPass(p1);
+    }
+  });
+
+  window.addEventListener('keyup', (e) => { state.keys[e.code] = false; });
+
+  // Touch Mobile
+  const joyBase = document.getElementById('joyBase');
+  const joyStick = document.getElementById('joyStick');
+  joyBase.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const t = e.touches[0];
+    const r = joyBase.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    const max = r.width / 2 - 18;
+    let dx = t.clientX - cx;
+    let dy = t.clientY - cy;
+    const d = Math.hypot(dx, dy);
+    if (d > max) { dx = (dx / d) * max; dy = (dy / d) * max; }
+    joyStick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    state.touchVec = { x: dx / max, y: dy / max };
+  }, { passive: false });
+
+  joyBase.addEventListener('touchend', () => {
+    joyStick.style.transform = 'translate(-50%, -50%)';
+    state.touchVec = { x: 0, y: 0 };
+  });
+
+  document.getElementById('mKickBtn').addEventListener('touchstart', (e) => { e.preventDefault(); state.keys['Space'] = true; });
+  document.getElementById('mKickBtn').addEventListener('touchend', () => { state.keys['Space'] = false; });
+  document.getElementById('mPassBtn').addEventListener('touchstart', (e) => { e.preventDefault(); performPass(players[0]); });
+  document.getElementById('mSpecBtn').addEventListener('touchstart', (e) => { e.preventDefault(); activateSpecial(players[0]); });
+
+  function activateSpecial(p) {
+    if (!p || p.energy < 100 || p.fallenTimer > 0) return;
+
+    p.energy = 0;
+    sfx.special();
+    spawnParticles(p.x, p.y, '#facc15', 18);
+
+    const name = p.name;
+    if (name === 'Sergio') {
+      // Drible rápido + Chute/Passe preciso ativo por 4 segundos
+      p.specialActive = 4.0;
+      p.dribbleTimer = 1.2;
+      p.vx += p.facing * 6;
+    } else if (name === 'Helinho') {
+      // Alta velocidade (consome toda a energia!) + se já tem 1 gol, faz lançamento preciso no parceiro!
+      p.specialActive = 3.5;
+      if (p.goals >= 1) {
+        const mate = players.find(m => m.team === p.team && m.id !== p.id);
+        if (mate && Math.hypot(ball.x - p.x, ball.y - p.y) < 120) {
+          const ang = Math.atan2(mate.y - ball.y, mate.x - ball.x);
+          ball.vx = Math.cos(ang) * 14.5;
+          ball.vy = Math.sin(ang) * 14.5;
+          ball.superShot = true;
+          state.lastTouch = p;
+        }
+      }
+    } else if (name === 'Lucas') {
+      // Chute canhão teleguiado + força de roubada
+      p.specialActive = 4.0;
+      const distBall = Math.hypot(ball.x - p.x, ball.y - p.y);
+      if (distBall < 65) {
+        shootAtGoal(p, true);
+      }
+    } else if (name === 'Elias') {
+      // Drible sambado + chute preciso
+      p.specialActive = 4.0;
+      p.dribbleTimer = 1.4;
+      p.vy += (Math.random() > 0.5 ? 1 : -1) * 6;
+    } else if (name === 'Leo') {
+      // Defesas apuradas (campo magnético repelente) + passe preciso imediato
+      p.specialActive = 4.5;
+      const distBall = Math.hypot(ball.x - p.x, ball.y - p.y);
+      if (distBall < 140) {
+        performPass(p, true);
+      }
+    }
+
+    if (p.isHuman) updateSpecialHUD();
+  }
+
+  function shootAtGoal(p, isSpecial = false) {
+    const targetX = p.team === 'blue' ? FIELD_RIGHT : FIELD_LEFT;
+    const midY = (ROAD_TOP + ROAD_BOTTOM) / 2;
+    // Mira nos cantos internos do golzinho (2x o tamanho da bola)
+    const cornerOffset = (Math.random() > 0.5 ? 1 : -1) * (GOAL_H * 0.25);
+    const errorSpread = (1 - p.stats.shotAccuracy) * 75 * (Math.random() - 0.5);
+    const targetY = midY + cornerOffset + (isSpecial ? 0 : errorSpread);
+
+    const ang = Math.atan2(targetY - ball.y, targetX - ball.x);
+    const power = p.stats.kickPower * (isSpecial ? 1.25 : 1.0);
+
+    ball.vx = Math.cos(ang) * power;
+    ball.vy = Math.sin(ang) * power;
+    ball.superShot = isSpecial;
+    state.lastTouch = p;
+    sfx.kick();
+    spawnParticles(ball.x, ball.y, isSpecial ? '#facc15' : '#ffffff', 12);
+  }
+
+  function performPass(p, forcePerfect = false) {
+    if (!p || p.fallenTimer > 0) return;
+    const distBall = Math.hypot(ball.x - p.x, ball.y - p.y);
+    if (distBall > p.radius + ball.radius + 26) return;
+
+    const mate = players.find(m => m.team === p.team && m.id !== p.id);
+    if (!mate) return;
+
+    let ang = Math.atan2(mate.y - ball.y, mate.x - ball.x);
+
+    // Deficiência do Elias: passes errados!
+    if (!forcePerfect && p.name === 'Elias') {
+      ang += (Math.random() - 0.5) * 1.15; // Desvio grande no passe
+    } else {
+      const err = (1 - p.stats.passAccuracy) * 0.6 * (Math.random() - 0.5);
+      ang += err;
+    }
+
+    ball.vx = Math.cos(ang) * 11.5;
+    ball.vy = Math.sin(ang) * 11.5;
+    ball.superShot = forcePerfect;
+    state.lastTouch = p;
+    sfx.kick();
+  }
+
+  function updateSpecialHUD() {
+    const p1 = players[0];
+    if (!p1) return;
+    document.getElementById('p1HudTitle').textContent = `⚡ ${p1.name.toUpperCase()}:`;
+    document.getElementById('p1SpecialDesc').textContent = `Especial [E]: ${p1.stats.specialDesc}`;
+    const fill = document.getElementById('p1EnergyFill');
+    const status = document.getElementById('p1SpecialStatus');
+    fill.style.width = `${Math.min(100, p1.energy)}%`;
+
+    if (p1.specialActive > 0) {
+      fill.classList.add('ready');
+      status.textContent = `ATIVO! (${p1.specialActive.toFixed(1)}s)`;
+      status.style.color = '#4ade80';
+    } else if (p1.energy >= 100) {
+      fill.classList.add('ready');
+      status.textContent = 'PRONTO! APERTE [E]';
+      status.style.color = '#facc15';
+    } else {
+      fill.classList.remove('ready');
+      status.textContent = `${Math.floor(p1.energy)}%`;
+      status.style.color = '#94a3b8';
+    }
+  }
+
+  // =========================================================
+  // 8. INTELIGÊNCIA ARTIFICIAL DOS AMIGOS
+  // =========================================================
+  function getAIControls(p) {
+    const isBlue = p.team === 'blue';
+    const oppGoalX = isBlue ? FIELD_RIGHT : FIELD_LEFT;
+    const ownGoalX = isBlue ? FIELD_LEFT : FIELD_RIGHT;
+    const midY = (ROAD_TOP + ROAD_BOTTOM) / 2;
+
+    // Usa especial quando estiver cheio e em boa posição
+    if (p.energy >= 100 && Math.hypot(ball.x - p.x, ball.y - p.y) < 160) {
+      activateSpecial(p);
+    }
+
+    const mate = players.find(m => m.team === p.team && m.id !== p.id);
+    const dSelf = Math.hypot(ball.x - p.x, ball.y - p.y);
+    const dMate = mate ? Math.hypot(ball.x - mate.x, ball.y - mate.y) : 9999;
+
+    let tx = ball.x;
+    let ty = ball.y;
+    let kick = false;
+
+    if (dSelf <= dMate + 12) {
+      const angToGoal = Math.atan2(midY - ball.y, oppGoalX - ball.x);
+      tx = ball.x - Math.cos(angToGoal) * 16;
+      ty = ball.y - Math.sin(angToGoal) * 16;
+      if (dSelf < p.radius + ball.radius + 16) kick = true;
+    } else {
+      const inOwnHalf = isBlue ? ball.x < W / 2 : ball.x > W / 2;
+      if (inOwnHalf) {
+        tx = ownGoalX + (ball.x - ownGoalX) * 0.4;
+        ty = midY + (ball.y - midY) * 0.55;
+      } else {
+        tx = isBlue ? Math.min(W * 0.76, ball.x + 55) : Math.max(W * 0.24, ball.x - 55);
+        ty = ball.y > midY ? ROAD_TOP + 65 : ROAD_BOTTOM - 65;
+      }
+    }
+
+    const dx = tx - p.x;
+    const dy = ty - p.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 6) return { mx: 0, my: 0, kick };
+    return { mx: (dx / dist) * 0.88, my: (dy / dist) * 0.88, kick };
+  }
+
+  // =========================================================
+  // 9. FÍSICA DO JOGO E COMEMORAÇÕES ÚNICAS
+  // =========================================================
+  function spawnParticles(x, y, color, count = 10) {
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const s = 1.5 + Math.random() * 4;
+      state.particles.push({
+        x, y,
+        vx: Math.cos(a) * s,
+        vy: Math.sin(a) * s,
+        life: 1,
+        color,
+        size: 4
+      });
+    }
+  }
+
+  function update(dt) {
+    updateNPCs(dt);
+
+    // Partículas
+    for (let i = state.particles.length - 1; i >= 0; i--) {
+      const pt = state.particles[i];
+      pt.x += pt.vx;
+      pt.y += pt.vy;
+      pt.life -= dt * 1.7;
+      if (pt.life <= 0) state.particles.splice(i, 1);
+    }
+
+    // Abacates caindo do poste (Comemoração do Lucas)
+    for (let i = state.avocados.length - 1; i >= 0; i--) {
+      const av = state.avocados[i];
+      av.vy += 0.35;
+      av.y += av.vy;
+      av.x += av.vx;
+      if (av.y > av.groundY) {
+        av.y = av.groundY;
+        av.vy = -av.vy * 0.45;
+        av.vx *= 0.7;
+      }
+      av.life -= dt;
+      if (av.life <= 0) state.avocados.splice(i, 1);
+    }
+
+    // Cena de Comemoração de Gol!
+    if (state.screen === 'GOAL_CELEBRATION') {
+      state.goalTimer -= dt;
+      ball.x += ball.vx;
+      ball.y += ball.vy;
+      ball.vx *= 0.92;
+      ball.vy *= 0.92;
+
+      runCelebrationAnimation(dt);
+
+      if (state.goalTimer <= 0) {
+        document.getElementById('goalBanner').classList.add('hidden');
+        if (state.isGoldenGoal) {
+          finishMatch();
+        } else {
+          state.screen = 'PLAYING';
+          sfx.whistle(false);
+        }
+      }
+      return;
+    }
+
+    if (state.screen !== 'PLAYING') return;
+
+    // Cronômetro
+    if (!state.isGoldenGoal) {
+      state.timeLeft -= dt;
+      if (state.timeLeft <= 0) {
+        state.timeLeft = 0;
+        if (state.scoreBlue === state.scoreRed) {
+          state.isGoldenGoal = true;
+          sfx.whistle(false);
+        } else {
+          finishMatch();
+          return;
+        }
+      }
+      updateTimerHUD();
+    }
+
+    // Atualiza Jogadores
+    players.forEach(p => {
+      if (p.kickCooldown > 0) p.kickCooldown -= dt;
+      if (p.dribbleTimer > 0) p.dribbleTimer -= dt;
+      if (p.specialActive > 0) p.specialActive -= dt;
+      if (p.fallenTimer > 0) {
+        p.fallenTimer -= dt;
+        return;
+      }
+
+      // Recarrega energia passivamente
+      if (p.energy < 100 && p.specialActive <= 0) {
+        p.energy = Math.min(100, p.energy + dt * 9.5);
+      }
+
+      let mx = 0, my = 0, kick = false;
+      if (p.isHuman) {
+        if (state.keys['KeyW'] || state.keys['ArrowUp']) my -= 1;
+        if (state.keys['KeyS'] || state.keys['ArrowDown']) my += 1;
+        if (state.keys['KeyA'] || state.keys['ArrowLeft']) mx -= 1;
+        if (state.keys['KeyD'] || state.keys['ArrowRight']) mx += 1;
+        if (state.keys['Space']) kick = true;
+
+        if (Math.hypot(state.touchVec.x, state.touchVec.y) > 0.1) {
+          mx = state.touchVec.x;
+          my = state.touchVec.y;
+        }
+      } else {
+        const ai = getAIControls(p);
+        mx = ai.mx;
+        my = ai.my;
+        kick = ai.kick;
+      }
+
+      const mag = Math.hypot(mx, my);
+      if (mag > 1) { mx /= mag; my /= mag; }
+      if (mx !== 0) p.facing = mx > 0 ? 1 : -1;
+
+      // Multiplicador de velocidade (Turbo do Helinho!)
+      const turboMult = (p.name === 'Helinho' && p.specialActive > 0) ? 1.55 : 1.0;
+      const accel = p.stats.accel * turboMult;
+      const maxSpd = p.stats.maxSpeed * turboMult;
+
+      p.vx = (p.vx + mx * accel) * 0.85;
+      p.vy = (p.vy + my * accel) * 0.85;
+
+      const curSpd = Math.hypot(p.vx, p.vy);
+      if (curSpd > maxSpd) {
+        p.vx = (p.vx / curSpd) * maxSpd;
+        p.vy = (p.vy / curSpd) * maxSpd;
+      }
+
+      p.x += p.vx;
+      p.y += p.vy;
+      if (curSpd > 0.4) p.animFrame += dt * 10;
+
+      // Mantém jogadores na área da rua
+      p.x = Math.max(40, Math.min(W - 40, p.x));
+      p.y = Math.max(ROAD_TOP + 12, Math.min(ROAD_BOTTOM - 10, p.y));
+
+      // Escudo Defensivo do Leo quando Especial ativo
+      if (p.name === 'Leo' && p.specialActive > 0) {
+        const dBall = Math.hypot(ball.x - p.x, ball.y - p.y);
+        if (dBall < 54 && state.lastTouch && state.lastTouch.team !== p.team) {
+          const ang = Math.atan2(ball.y - p.y, ball.x - p.x);
+          ball.vx = Math.cos(ang) * 11;
+          ball.vy = Math.sin(ang) * 11;
+          state.lastTouch = p;
+          sfx.post();
+          spawnParticles(ball.x, ball.y, '#60a5fa', 10);
+        }
+      }
+
+      // Ação de Chutar / Roubar Bola / Driblar
+      if (kick && p.kickCooldown <= 0) {
+        p.kickCooldown = 0.35;
+        const dBall = Math.hypot(ball.x - p.x, ball.y - p.y);
+
+        if (dBall <= p.radius + ball.radius + 20) {
+          const isSpec = p.specialActive > 0;
+          shootAtGoal(p, isSpec);
+          p.energy = Math.min(100, p.energy + 12);
+        } else if (mag > 0.1) {
+          // Drible rápido (Sergio / Elias) ou Arrancada de roubada (Lucas / Leo)
+          if (p.stats.dribbleSkill > 0) {
+            p.dribbleTimer = 0.35;
+            p.vx += mx * (3.5 * p.stats.dribbleSkill);
+            p.vy += my * (3.5 * p.stats.dribbleSkill);
+          } else {
+            // Lucas não dribla, mas dá bote forte!
+            p.vx += mx * 3.8;
+            p.vy += my * 3.8;
+          }
+        }
+      }
+    });
+
+    // Colisão Jogador x Jogador (com força de roubada do Lucas!)
+    for (let i = 0; i < players.length; i++) {
+      for (let j = i + 1; j < players.length; j++) {
+        const a = players[i];
+        const b = players[j];
+        if (a.fallenTimer > 0 || b.fallenTimer > 0) continue;
+
+        // Se Sergio ou Elias estiverem driblando, passam liso pelo marcador!
+        if (a.dribbleTimer > 0 || b.dribbleTimer > 0) continue;
+
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dist = Math.hypot(dx, dy);
+        const minD = a.radius + b.radius;
+
+        if (dist < minD && dist > 0) {
+          const nx = dx / dist;
+          const ny = dy / dist;
+          const overlap = (minD - dist) / 2;
+
+          a.x -= nx * overlap;
+          a.y -= ny * overlap;
+          b.x += nx * overlap;
+          b.y += ny * overlap;
+
+          // Lucas derruba/empurra adversários nas roubadas de bola
+          if (a.name === 'Lucas' && a.team !== b.team && Math.hypot(a.vx, a.vy) > 2.2) {
+            b.vx += nx * 6.5;
+            b.vy += ny * 6.5;
+            b.fallenTimer = 0.65;
+            spawnParticles(b.x, b.y, '#84cc16', 8);
+          } else if (b.name === 'Lucas' && b.team !== a.team && Math.hypot(b.vx, b.vy) > 2.2) {
+            a.vx -= nx * 6.5;
+            a.vy -= ny * 6.5;
+            a.fallenTimer = 0.65;
+            spawnParticles(a.x, a.y, '#84cc16', 8);
+          }
+        }
+      }
+    }
+
+    // Física da Bola
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+    ball.vx *= 0.982;
+    ball.vy *= 0.982;
+    ball.spin += Math.hypot(ball.vx, ball.vy) * 0.05;
+    if (Math.hypot(ball.vx, ball.vy) < 4) ball.superShot = false;
+
+    // Condução de Bola
+    players.forEach(p => {
+      if (p.fallenTimer > 0) return;
+      const dx = ball.x - p.x;
+      const dy = ball.y - p.y;
+      const dist = Math.hypot(dx, dy);
+      const minD = p.radius + ball.radius;
+
+      if (dist < minD && dist > 0) {
+        const nx = dx / dist;
+        const ny = dy / dist;
+        ball.x += nx * (minD - dist);
+        ball.y += ny * (minD - dist);
+
+        const impact = (p.vx - ball.vx) * nx + (p.vy - ball.vy) * ny;
+        if (impact > 0) {
+          ball.vx += nx * (impact * 1.2 + 1.5);
+          ball.vy += ny * (impact * 1.2 + 1.5);
+          state.lastTouch = p;
+          p.energy = Math.min(100, p.energy + 3);
+        }
+      }
+    });
+
+    // Meio-fio superior e inferior da rua (bola rebate no meio-fio)
+    if (ball.y - ball.radius < ROAD_TOP + 6) {
+      ball.y = ROAD_TOP + 6 + ball.radius;
+      ball.vy = Math.abs(ball.vy) * 0.8;
+    } else if (ball.y + ball.radius > ROAD_BOTTOM - 6) {
+      ball.y = ROAD_BOTTOM - 6 - ball.radius;
+      ball.vy = -Math.abs(ball.vy) * 0.8;
+    }
+
+    // Traves de Chinelo/Cone e Gol
+    const midY = (ROAD_TOP + ROAD_BOTTOM) / 2;
+    const goalTop = midY - GOAL_H / 2;
+    const goalBot = midY + GOAL_H / 2;
+
+    const posts = [
+      { x: FIELD_LEFT, y: goalTop }, { x: FIELD_LEFT, y: goalBot },
+      { x: FIELD_RIGHT, y: goalTop }, { x: FIELD_RIGHT, y: goalBot }
+    ];
+
+    posts.forEach(pt => {
+      const dx = ball.x - pt.x;
+      const dy = ball.y - pt.y;
+      const d = Math.hypot(dx, dy);
+      if (d < ball.radius + 7 && d > 0) {
+        const nx = dx / d, ny = dy / d;
+        ball.x = pt.x + nx * (ball.radius + 7);
+        ball.y = pt.y + ny * (ball.radius + 7);
+        const dot = ball.vx * nx + ball.vy * ny;
+        ball.vx = (ball.vx - 2 * dot * nx) * 0.85;
+        ball.vy = (ball.vy - 2 * dot * ny) * 0.85;
+        sfx.post();
+      }
+    });
+
+    const inGoal = ball.y > goalTop && ball.y < goalBot;
+    if (ball.x - ball.radius < FIELD_LEFT) {
+      if (inGoal) {
+        if (ball.x < FIELD_LEFT - 10) onGoal('red');
+      } else {
+        ball.x = FIELD_LEFT + ball.radius;
+        ball.vx = Math.abs(ball.vx) * 0.82;
+      }
+    }
+    if (ball.x + ball.radius > FIELD_RIGHT) {
+      if (inGoal) {
+        if (ball.x > FIELD_RIGHT + 10) onGoal('blue');
+      } else {
+        ball.x = FIELD_RIGHT - ball.radius;
+        ball.vx = -Math.abs(ball.vx) * 0.82;
+      }
+    }
+
+    updateSpecialHUD();
+  }
+
+  // =========================================================
+  // 10. GOL E COMEMORAÇÃO PERSONALIZADA DE CADA AMIGO
+  // =========================================================
+  function onGoal(scoringTeam) {
+    if (state.screen === 'GOAL_CELEBRATION') return;
+    state.screen = 'GOAL_CELEBRATION';
+    state.goalTimer = 3.2;
+
+    if (scoringTeam === 'blue') {
+      state.scoreBlue++;
+      document.getElementById('scoreBlue').textContent = state.scoreBlue;
+    } else {
+      state.scoreRed++;
+      document.getElementById('scoreRed').textContent = state.scoreRed;
+    }
+
+    let scorer = state.lastTouch;
+    if (!scorer || scorer.team !== scoringTeam) {
+      scorer = players.find(p => p.team === scoringTeam);
+    } else {
+      scorer.goals++;
+    }
+
+    state.celebratingPlayer = scorer;
+    state.celebrationType = scorer ? scorer.stats.celebration : 'spin_punch';
+
+    // Efeitos especiais imediatos na comemoração!
+    if (state.celebrationType === 'avocado_rain') {
+      // Lucas: Abacates caem do poste de energia!
+      for (let i = 0; i < 14; i++) {
+        state.avocados.push({
+          x: 240 + (Math.random() - 0.5) * 180,
+          y: 65 - Math.random() * 40,
+          vx: (Math.random() - 0.5) * 3,
+          vy: 1 + Math.random() * 2,
+          groundY: ROAD_TOP + 20 + Math.random() * 140,
+          life: 3.5
+        });
+      }
+    } else if (state.celebrationType === 'vacuum_suck') {
+      // Leo: Suga o ar e todos no campo caem!
+      sfx.suckWind();
+      players.forEach(pl => {
+        if (pl.id !== scorer.id) {
+          pl.fallenTimer = 3.2;
+        }
+      });
+    }
+
+    let desc = `⚽ Gol de ${scorer.name}!`;
+    if (scorer.name === 'Helinho' && scorer.goals === 1) {
+      desc += ' (Lançamento Preciso DESBLOQUEADO!)';
+    }
+    document.getElementById('goalScorerLabel').textContent = desc;
+    document.getElementById('goalBanner').classList.remove('hidden');
+
+    sfx.whistle(false);
+    sfx.goal();
+    triggerNPCGoalReaction();
+    spawnParticles(ball.x, ball.y, '#facc15', 30);
+
+    if (!state.isGoldenGoal) {
+      setTimeout(() => {
+        if (state.screen === 'GOAL_CELEBRATION') {
+          resetPositions(scoringTeam === 'blue' ? 'red' : 'blue');
+        }
+      }, 3050);
+    }
+  }
+
+  function runCelebrationAnimation(dt) {
+    const p = state.celebratingPlayer;
+    if (!p) return;
+
+    p.animFrame += dt * 14;
+
+    if (state.celebrationType === 'spin_punch') {
+      // Sergio: rodopio com soco no ar
+      p.facing = Math.floor(p.animFrame) % 2 === 0 ? 1 : -1;
+      p.y -= Math.sin(p.animFrame * 0.8) * 1.5;
+    } else if (state.celebrationType === 'run_air_kick') {
+      // Helinho: corrida e chute no ar
+      p.x += p.facing * 2.2;
+      p.x = Math.max(120, Math.min(W - 120, p.x));
+    } else if (state.celebrationType === 'slow_pushups') {
+      // Elias: corrida lenta no primeiro segundo, depois flexões no chão!
+      if (state.goalTimer > 2.1) {
+        p.x += p.facing * 1.1;
+      }
+    } else if (state.celebrationType === 'vacuum_suck') {
+      // Leo: puxa visualmente os outros jogadores caídos um pouco para perto
+      players.forEach(other => {
+        if (other.id !== p.id) {
+          other.x += (p.x - other.x) * dt * 1.4;
+          other.y += (p.y - other.y) * dt * 1.4;
+        }
+      });
+    }
+  }
+
+  // =========================================================
+  // 11. FIM DA PARTIDA E REGRA DOS 5 AMIGOS
+  // =========================================================
+  function finishMatch() {
+    state.screen = 'GAMEOVER';
+    sfx.whistle(true);
+
+    const { p1, p2, p3, p4, bench } = state.lineup;
+    const blueWon = state.scoreBlue > state.scoreRed;
+
+    document.getElementById('endScoreText').textContent =
+            `${p1} & ${p2}  ${state.scoreBlue} x ${state.scoreRed}  ${p3} & ${p4}`;
+
+    const msgEl = document.getElementById('swapMessage');
+    const loseBtns = document.getElementById('loseButtons');
+    const nextBtn = document.getElementById('nextMatchBtn');
+
+    if (blueWon) {
+      document.getElementById('endTitle').textContent = '🏆 SUA DUPLA VENCEU!';
+      loseBtns.classList.add('hidden');
+      nextBtn.classList.remove('hidden');
+
+      const slotOut = Math.random() < 0.5 ? 'p3' : 'p4';
+      const outName = state.lineup[slotOut];
+      state.lineup[slotOut] = bench;
+      state.lineup.bench = outName;
+      syncDropdownsFromLineup();
+
+      msgEl.innerHTML = `Vitória! <strong>${state.lineup[slotOut]}</strong> entrou aleatoriamente no lugar de <span style="color:#f87171;">${outName}</span> (que agora aguarda na calçada).`;
+    } else {
+      document.getElementById('endTitle').textContent = '💀 SUA DUPLA PERDEU!';
+      loseBtns.classList.remove('hidden');
+      nextBtn.classList.add('hidden');
+
+      msgEl.innerHTML = `Escolha quem sai da sua dupla para <strong>${bench}</strong> entrar no lugar:`;
+      const b1 = document.getElementById('btnRemoveP1');
+      const b2 = document.getElementById('btnRemoveP2');
+      b1.textContent = `Tirar ${p1}`;
+      b2.textContent = `Tirar ${p2}`;
+
+      b1.onclick = () => {
+        state.lineup.p1 = state.lineup.p2;
+        state.lineup.p2 = bench;
+        state.lineup.bench = p1;
+        completeLossSwap(p1);
+      };
+      b2.onclick = () => {
+        state.lineup.p2 = bench;
+        state.lineup.bench = p2;
+        completeLossSwap(p2);
+      };
+    }
+
+    document.getElementById('gameOverOverlay').classList.remove('hidden');
+  }
+
+  function completeLossSwap(removedName) {
+    syncDropdownsFromLineup();
+    document.getElementById('loseButtons').classList.add('hidden');
+    document.getElementById('swapMessage').innerHTML =
+            `✅ <strong>${removedName}</strong> foi para a calçada e <strong>${state.lineup.p2}</strong> entrou na sua dupla (${state.lineup.p1} & ${state.lineup.p2})!`;
+    document.getElementById('nextMatchBtn').classList.remove('hidden');
+  }
+
+  function updateTimerHUD() {
+    const el = document.getElementById('matchTimer');
+    const sub = document.getElementById('timerSubLabel');
+    if (state.isGoldenGoal) {
+      el.textContent = 'GOL DE OURO';
+      el.classList.add('golden');
+      sub.textContent = 'QUEM FIZER GANHA!';
+      return;
+    }
+    el.classList.remove('golden');
+    const m = Math.floor(state.timeLeft / 60);
+    const s = Math.floor(state.timeLeft % 60);
+    el.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    sub.textContent = 'RUA RESIDENCIAL';
+  }
+
+  // =========================================================
+  // 12. RENDERIZAÇÃO 8-BITS (RUA, CASAS, POSTE, NPCS E BONECOS)
+  // =========================================================
+  function drawStreetEnvironment() {
+    // Céu / Fundo superior
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(0, 0, W, 95);
+
+    // Casas Residenciais 8-bits ao fundo
+    const houses = [
+      { x: 20, w: 195, wall: '#fef08a', roof: '#b91c1c', door: '#78350f' },
+      { x: 295, w: 220, wall: '#fed7aa', roof: '#9a3412', door: '#451a03' },
+      { x: 540, w: 210, wall: '#bbf7d0', roof: '#15803d', door: '#713f12' },
+      { x: 775, w: 200, wall: '#e0e7ff', roof: '#1d4ed8', door: '#1e293b' },
+      { x: 995, w: 190, wall: '#fbcfe8', roof: '#be185d', door: '#4c0519' }
+    ];
+
+    houses.forEach(h => {
+      // Parede da casa
+      ctx.fillStyle = h.wall;
+      ctx.fillRect(h.x, 28, h.w, 68);
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(h.x, 28, h.w, 68);
+
+      // Telhado 8-bits
+      ctx.fillStyle = h.roof;
+      ctx.beginPath();
+      ctx.moveTo(h.x - 8, 28);
+      ctx.lineTo(h.x + h.w / 2, 4);
+      ctx.lineTo(h.x + h.w + 8, 28);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Porta
+      ctx.fillStyle = h.door;
+      ctx.fillRect(h.x + 24, 52, 26, 44);
+      // Janelas
+      ctx.fillStyle = '#bae6fd';
+      ctx.fillRect(h.x + 72, 46, 34, 26);
+      ctx.strokeRect(h.x + 72, 46, 34, 26);
+      if (h.w > 200) {
+        ctx.fillRect(h.x + 125, 46, 34, 26);
+        ctx.strokeRect(h.x + 125, 46, 34, 26);
+      }
+    });
+
+    // Poste de Energia (de onde caem os abacates do Lucas!)
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(236, 6, 14, 136);
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(236, 6, 14, 136);
+    // Cruzeta e transformador
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(210, 18, 66, 8);
+    ctx.fillRect(222, 32, 22, 28);
+    // Fios elétricos atravessando a rua
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 14);
+    ctx.quadraticCurveTo(120, 28, 215, 20);
+    ctx.quadraticCurveTo(650, 42, W, 16);
+    ctx.stroke();
+
+    // Calçada Superior
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillRect(0, 96, W, ROAD_TOP - 96);
+    // Meio-fio superior
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(0, ROAD_TOP - 8, W, 8);
+
+    // Asfalto da Rua
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(0, ROAD_TOP, W, ROAD_BOTTOM - ROAD_TOP);
+
+    // Faixa amarela tracejada no meio da rua
+    const midY = (ROAD_TOP + ROAD_BOTTOM) / 2;
+    ctx.fillStyle = '#facc15';
+    for (let x = 20; x < W; x += 70) {
+      ctx.fillRect(x, midY - 3, 38, 6);
+    }
+
+    // Linha de giz do meio de campo e áreas
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(W / 2, ROAD_TOP + 6);
+    ctx.lineTo(W / 2, ROAD_BOTTOM - 6);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(W / 2, midY, 64, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Calçada Inferior
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(0, ROAD_BOTTOM, W, 8);
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillRect(0, ROAD_BOTTOM + 8, W, H - (ROAD_BOTTOM + 8));
+
+    // Gols Improvisados de Rua (Chinelos e Cones)
+    const goalTop = midY - GOAL_H / 2;
+    const goalBot = midY + GOAL_H / 2;
+    drawStreetGoal(FIELD_LEFT, goalTop, goalBot, true);
+    drawStreetGoal(FIELD_RIGHT, goalTop, goalBot, false);
+  }
+
+  function drawStreetGoal(x, topY, botY, isLeft) {
+    // Linha imaginária do gol em giz
+    ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+    ctx.setLineDash([8, 8]);
+    ctx.beginPath();
+    ctx.moveTo(x, topY);
+    ctx.lineTo(x, botY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Poste superior = Cone Laranja de rua
+    [topY, botY].forEach((py, idx) => {
+      if (idx === 0) {
+        // Cone laranja 8-bits
+        ctx.fillStyle = '#f97316';
+        ctx.beginPath();
+        ctx.moveTo(x - 10, py + 8);
+        ctx.lineTo(x + 10, py + 8);
+        ctx.lineTo(x + 4, py - 12);
+        ctx.lineTo(x - 4, py - 12);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x - 6, py - 3, 12, 4);
+      } else {
+        // Chinelo Havaianas azul/branco
+        ctx.fillStyle = '#2563eb';
+        ctx.fillRect(x - 11, py - 5, 22, 10);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x - 11, py - 5, 22, 10);
+      }
+    });
+  }
+
+  function drawNPCs() {
+    state.npcs.forEach(npc => {
+      ctx.save();
+      const jump = npc.cheerTimer > 0 ? Math.abs(Math.sin(npc.cheerTimer * 12)) * 10 : 0;
+      const x = Math.round(npc.x);
+      const y = Math.round(npc.y - jump);
+
+      // Sombra
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(x - 12, npc.y + 14, 24, 6);
+
+      if (npc.type === 'chair_guy') {
+        // Cadeira de praia na calçada
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(x - 14, y - 6, 28, 20);
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x - 14, y - 6, 28, 20);
+
+        // Homem sentado
+        ctx.fillStyle = npc.shorts;
+        ctx.fillRect(x - 10, y + 4, 22, 10);
+        ctx.fillStyle = npc.shirt;
+        ctx.fillRect(x - 10, y - 14, 20, 18);
+        // Cabeça
+        ctx.fillStyle = npc.skin;
+        ctx.fillRect(x - 8, y - 28, 16, 14);
+        // Braços levantados se sair gol!
+        if (npc.cheerTimer > 0) {
+          ctx.fillStyle = npc.skin;
+          ctx.fillRect(x - 15, y - 28, 5, 16);
+          ctx.fillRect(x + 10, y - 28, 5, 16);
+        }
+      } else if (npc.type === 'bald_belly') {
+        // Homem careca barrigudo
+        const step = Math.sin(npc.walkPhase) * 3;
+        // Pernas
+        ctx.fillStyle = npc.skin;
+        ctx.fillRect(x - 8, y + 8, 6, 10 + step);
+        ctx.fillRect(x + 2, y + 8, 6, 10 - step);
+        // Shorts
+        ctx.fillStyle = npc.shorts;
+        ctx.fillRect(x - 11, y, 22, 10);
+        // Barriga proeminente
+        ctx.fillStyle = npc.shirt;
+        ctx.fillRect(x - 14, y - 18, 28, 20);
+        // Cabeça careca brilhante
+        ctx.fillStyle = npc.skin;
+        ctx.fillRect(x - 9, y - 33, 18, 15);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x - 4, y - 31, 4, 3); // Brilho da careca
+      } else {
+        // Mulheres (2 Loiras e 1 Ruiva)
+        const step = Math.sin(npc.walkPhase) * 3;
+        ctx.fillStyle = npc.skin;
+        ctx.fillRect(x - 6, y + 8, 5, 10 + step);
+        ctx.fillRect(x + 1, y + 8, 5, 10 - step);
+        // Vestido
+        ctx.fillStyle = npc.dress;
+        ctx.fillRect(x - 10, y - 14, 20, 23);
+        // Cabeça
+        ctx.fillStyle = npc.skin;
+        ctx.fillRect(x - 8, y - 28, 16, 14);
+        // Cabelo longo (loiro ou ruivo)
+        ctx.fillStyle = npc.hair;
+        ctx.fillRect(x - 10, y - 31, 20, 7);
+        ctx.fillRect(x - 11, y - 26, 5, 16);
+        ctx.fillRect(x + 6, y - 26, 5, 16);
+      }
+
+      // Balãozinho de torcida quando sai gol
+      if (npc.cheerTimer > 0) {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x - 16, y - 50, 32, 16);
+        ctx.fillStyle = '#dc2626';
+        ctx.font = 'bold 10px "Press Start 2P", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('GOL!', x, y - 38);
+      }
+      ctx.restore();
+    });
+  }
+
+  function draw8BitPlayers() {
+    players.forEach(p => {
+      ctx.save();
+      const st = p.stats;
+      const x = Math.round(p.x);
+      const y = Math.round(p.y);
+
+      // Sombra pixelada no asfalto
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+      ctx.fillRect(x - 14, y + 16, 28, 7);
+
+      // Aura do Especial Ativo
+      if (p.specialActive > 0) {
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x - 20, y - 34, 40, 54);
+      }
+
+      // Se caiu no chão (Especial/Comemoração do Leo ou roubada do Lucas)
+      if (p.fallenTimer > 0) {
+        ctx.translate(x, y + 10);
+        ctx.rotate(Math.PI / 2);
+        drawSpriteBody(p, 0, 0, true);
+        ctx.restore();
+        drawPlayerTag(p, x, y - 22);
+        return;
+      }
+
+      // Comemoração do Elias: Flexões no chão!
+      if (state.screen === 'GOAL_CELEBRATION' && state.celebratingPlayer?.id === p.id &&
+              state.celebrationType === 'slow_pushups' && state.goalTimer <= 2.1) {
+        const pushOffset = Math.sin(p.animFrame * 1.3) * 4;
+        ctx.fillStyle = st.skin;
+        ctx.fillRect(x - 18, y + 8 + pushOffset, 34, 9);
+        ctx.fillStyle = st.shortsColor;
+        ctx.fillRect(x - 20, y + 7 + pushOffset, 14, 10);
+        ctx.fillStyle = st.hairColor;
+        ctx.fillRect(x + 12, y + 3 + pushOffset, 10, 10);
+        ctx.restore();
+        drawPlayerTag(p, x, y - 16);
+        return;
+      }
+
+      // Pulo na comemoração do Helinho (chute no ar) ou Sergio (rodopio)
+      let jumpY = 0;
+      if (state.screen === 'GOAL_CELEBRATION' && state.celebratingPlayer?.id === p.id) {
+        if (state.celebrationType === 'run_air_kick' || state.celebrationType === 'spin_punch') {
+          jumpY = -Math.abs(Math.sin(p.animFrame * 0.9)) * 16;
+        }
+      }
+
+      drawSpriteBody(p, x, y + jumpY, false);
+      ctx.restore();
+      drawPlayerTag(p, x, y + jumpY - 38);
+    });
+  }
+
+  function drawSpriteBody(p, x, y, isFallen) {
+    const st = p.stats;
+    const step = isFallen ? 0 : Math.sin(p.animFrame) * 4;
+
+    // 1. Pernas e Pés Descalços (todos os 5 jogam descalços!)
+    ctx.fillStyle = st.skin;
+    // Perna esquerda e direita
+    ctx.fillRect(x - 9, y + 6, 7, 11 + step);
+    ctx.fillRect(x + 2, y + 6, 7, 11 - step);
+    // Dedinhos / pés descalços
+    ctx.fillRect(x - 10, y + 15 + step, 9, 3);
+    ctx.fillRect(x + 1, y + 15 - step, 9, 3);
+
+    // 2. Shorts
+    ctx.fillStyle = st.shortsColor;
+    ctx.fillRect(x - 11, y - 2, 22, 10);
+    if (st.shortsPattern === 'floral') {
+      // Estampa florida 8-bits do Elias!
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(x - 8, y, 4, 4);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(x + 3, y + 2, 4, 4);
+      ctx.fillStyle = '#4ade80';
+      ctx.fillRect(x - 2, y + 4, 4, 3);
+    }
+
+    // 3. Tronco (Camisa ou Sem Camisa com faixa sutil do time)
+    if (st.shirtColor) {
+      ctx.fillStyle = st.shirtColor;
+      ctx.fillRect(x - 12, y - 19, 24, 18);
+
+      // Mangas (Helinho tem manga longa!)
+      ctx.fillStyle = st.shirtColor;
+      if (st.longSleeve) {
+        ctx.fillRect(x - 16, y - 18, 4, 15);
+        ctx.fillRect(x + 12, y - 18, 4, 15);
+        // Mãos
+        ctx.fillStyle = st.skin;
+        ctx.fillRect(x - 16, y - 3, 4, 4);
+        ctx.fillRect(x + 12, y - 3, 4, 4);
+      } else {
+        ctx.fillRect(x - 16, y - 18, 4, 7);
+        ctx.fillRect(x + 12, y - 18, 4, 7);
+        ctx.fillStyle = st.skin;
+        ctx.fillRect(x - 16, y - 11, 4, 10);
+        ctx.fillRect(x + 12, y - 11, 4, 10);
+      }
+
+      // Número 72 na frente da camisa do Helinho
+      if (st.shirtNumber) {
+        ctx.fillStyle = '#facc15';
+        ctx.font = 'bold 8px "Press Start 2P", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(st.shirtNumber, x, y - 7);
+      }
+    } else {
+      // Sem camisa (Sergio, Lucas, Elias)
+      ctx.fillStyle = st.skin;
+      ctx.fillRect(x - 12, y - 19, 24, 18);
+      // Braços
+      ctx.fillRect(x - 16, y - 18, 4, 15);
+      ctx.fillRect(x + 12, y - 18, 4, 15);
+      // Braçadeira / faixa diagonal do time para identificar fácil em campo
+      ctx.fillStyle = p.team === 'blue' ? '#3b82f6' : '#ef4444';
+      ctx.fillRect(x - 16, y - 14, 4, 4);
+      ctx.fillRect(x + 12, y - 14, 4, 4);
+    }
+
+    // Soco no ar na comemoração do Sergio!
+    if (state.screen === 'GOAL_CELEBRATION' && state.celebratingPlayer?.id === p.id &&
+            state.celebrationType === 'spin_punch') {
+      ctx.fillStyle = st.skin;
+      ctx.fillRect(x + 12, y - 32, 5, 16);
+    }
+
+    // 4. Cabeça
+    ctx.fillStyle = st.skin;
+    ctx.fillRect(x - 9, y - 33, 18, 14);
+
+    // Olhos 8-bits
+    ctx.fillStyle = '#09090b';
+    const eyeX = p.facing > 0 ? x + 2 : x - 7;
+    ctx.fillRect(eyeX, y - 28, 3, 3);
+    ctx.fillRect(eyeX + 5, y - 28, 3, 3);
+
+    // 5. Cabelo ou Boné Virado Para Trás
+    if (st.hatColor) {
+      // Boné virado para trás (Sergio e Lucas)
+      ctx.fillStyle = st.hatColor;
+      ctx.fillRect(x - 10, y - 36, 20, 6);
+      // Aba virada para trás (lado oposto ao facing)
+      const visorX = p.facing > 0 ? x - 16 : x + 9;
+      ctx.fillRect(visorX, y - 33, 7, 3);
+    } else if (st.curlyHair) {
+      // Cabelos enrolados do Elias
+      ctx.fillStyle = st.hairColor;
+      ctx.fillRect(x - 11, y - 37, 22, 6);
+      ctx.fillRect(x - 11, y - 34, 4, 6);
+      ctx.fillRect(x + 7, y - 34, 4, 6);
+    } else {
+      // Cabelo liso arredondado (Helinho e Leo)
+      ctx.fillStyle = st.hairColor;
+      ctx.fillRect(x - 10, y - 36, 20, 6);
+      ctx.fillRect(x - 10, y - 33, 3, 5);
+      ctx.fillRect(x + 7, y - 33, 3, 5);
+    }
+  }
+
+  function drawPlayerTag(p, x, y) {
+    const teamColor = p.team === 'blue' ? '#3b82f6' : '#ef4444';
+    ctx.font = 'bold 12px "Chakra Petch", sans-serif';
+    const w = ctx.measureText(p.name).width + 12;
+
+    ctx.fillStyle = 'rgba(9, 13, 22, 0.85)';
+    ctx.fillRect(x - w / 2, y - 10, w, 16);
+    ctx.strokeStyle = teamColor;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x - w / 2, y - 10, w, 16);
+
+    ctx.fillStyle = p.isHuman ? '#facc15' : '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.fillText(p.name, x, y + 2);
+  }
+
+  function drawBallAndAvocados() {
+    // Abacates da comemoração do Lucas
+    state.avocados.forEach(av => {
+      ctx.fillStyle = '#365314';
+      ctx.beginPath();
+      ctx.ellipse(av.x, av.y, 7, 9, 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#a3e635';
+      ctx.beginPath();
+      ctx.ellipse(av.x, av.y, 4, 6, 0.3, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Sombra da bola
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(ball.x - 10, ball.y + 9, 20, 5);
+
+    // Rastro de super chute
+    if (ball.superShot) {
+      ctx.fillStyle = 'rgba(250, 204, 21, 0.45)';
+      ctx.beginPath();
+      ctx.arc(ball.x - ball.vx * 1.2, ball.y - ball.vy * 1.2, ball.radius + 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Bola 8-bits
+    ctx.save();
+    ctx.translate(ball.x, ball.y);
+    ctx.rotate(ball.spin);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-10, -10, 20, 20);
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(-4, -4, 8, 8);
+    ctx.fillRect(-10, -10, 5, 5);
+    ctx.fillRect(5, 5, 5, 5);
+    ctx.restore();
+  }
+
+  function drawParticles() {
+    state.particles.forEach(pt => {
+      ctx.globalAlpha = Math.max(0, pt.life);
+      ctx.fillStyle = pt.color;
+      ctx.fillRect(pt.x, pt.y, pt.size, pt.size);
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, W, H);
+    drawStreetEnvironment();
+    drawNPCs();
+    drawParticles();
+    draw8BitPlayers();
+    drawBallAndAvocados();
+  }
+
+  // =========================================================
+  // 13. LOOP E BOTÕES
+  // =========================================================
+  let lastTs = 0;
+  function loop(ts) {
+    const dt = Math.min((ts - lastTs) / 1000, 0.05) || 0.016;
+    lastTs = ts;
+    update(dt);
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  function startMatch() {
+    state.timeLeft = 120;
+    state.isGoldenGoal = false;
+    state.scoreBlue = 0;
+    state.scoreRed = 0;
+    state.avocados = [];
+
+    document.getElementById('scoreBlue').textContent = '0';
+    document.getElementById('scoreRed').textContent = '0';
+
+    spawnPlayers();
+    resetPositions();
+    updateTimerHUD();
+
+    document.getElementById('lobbyOverlay').classList.add('hidden');
+    document.getElementById('gameOverOverlay').classList.add('hidden');
+    document.getElementById('goalBanner').classList.add('hidden');
+
+    state.screen = 'PLAYING';
+    sfx.whistle(true);
+  }
+
+  document.getElementById('startBtn').addEventListener('click', startMatch);
+  document.getElementById('nextMatchBtn').addEventListener('click', startMatch);
+
+  document.getElementById('lobbyBtn').addEventListener('click', () => {
+    state.screen = 'LOBBY';
+    syncDropdownsFromLineup();
+    document.getElementById('lobbyOverlay').classList.remove('hidden');
+    document.getElementById('gameOverOverlay').classList.add('hidden');
+  });
+
+  document.getElementById('backLobbyBtn').addEventListener('click', () => {
+    state.screen = 'LOBBY';
+    syncDropdownsFromLineup();
+    document.getElementById('gameOverOverlay').classList.add('hidden');
+    document.getElementById('lobbyOverlay').classList.remove('hidden');
+  });
+
+  document.getElementById('ballDropBtn').addEventListener('click', () => {
+    if (state.screen === 'PLAYING') {
+      ball.x = W / 2;
+      ball.y = (ROAD_TOP + ROAD_BOTTOM) / 2;
+      ball.vx = 0;
+      ball.vy = 0;
+      sfx.whistle(false);
+    }
+  });
+
+  document.getElementById('soundBtn').addEventListener('click', (e) => {
+    sfx.muted = !sfx.muted;
+    e.target.textContent = sfx.muted ? '🔇 SOM: OFF' : '🔊 SOM: ON';
+  });
+
+  window.onload = () => {
+    canvas.width = W;
+    canvas.height = H;
+    initSelects();
+    initStreetNPCs();
+    spawnPlayers();
+    requestAnimationFrame(loop);
+  };
+</script>
+</body>
+</html>
