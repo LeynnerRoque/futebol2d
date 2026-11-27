@@ -1,3 +1,5 @@
+const SPECIAL_DURATION = 20;
+
 export class PhysicsEngine {
     constructor(bounds, sfx, callbacks) {
         this.bounds = bounds;
@@ -11,16 +13,20 @@ export class PhysicsEngine {
         const midY = (roadTop + roadBottom) / 2;
 
         const isDirect = forceDirectGoal || player.hasDirectGoalShotReady();
+        const guaranteedGoal = player.stats.guaranteedGoal === true;
         const cornerOffset = (Math.random() > 0.5 ? 1 : -1) * (goalHeight * 0.22);
-        const errorSpread = isDirect ? 0 : (1 - player.stats.shotAccuracy) * 75 * (Math.random() - 0.5);
-        const targetY = midY + cornerOffset + errorSpread;
+        const errorSpread = isDirect || guaranteedGoal
+            ? 0
+            : (1 - player.stats.shotAccuracy) * 75 * (Math.random() - 0.5);
+        const targetY = guaranteedGoal ? midY : midY + cornerOffset + errorSpread;
 
         const ang = Math.atan2(targetY - ball.y, targetX - ball.x);
         const power = player.stats.kickPower * (isDirect ? 1.28 : 1.0);
 
         ball.vx = Math.cos(ang) * power;
         ball.vy = Math.sin(ang) * power;
-        ball.superShot = isDirect;
+        ball.superShot = isDirect || guaranteedGoal;
+        ball.guaranteedGoal = guaranteedGoal;
 
         player.registerTouch();
         this.callbacks.onBallTouch(player);
@@ -55,37 +61,31 @@ export class PhysicsEngine {
 
     activateSpecial(player, players, ball) {
         if (!player || player.fallenTimer > 0) return;
-        if (!player.hasDirectGoalShotReady() && player.energy < 100) return;
+        if (!player.canActivateSpecial()) return;
 
-        if (player.name === 'Helinho' && !player.specialUnlocked) {
-            player.energy = 0;
-            player.specialActive = 3.5;
-            if (player.goals >= 1) {
-                const mate = players.find((m) => m.team === player.team && m.id !== player.id);
-                if (mate && Math.hypot(ball.x - player.x, ball.y - player.y) < 130) {
-                    const ang = Math.atan2(mate.y - ball.y, mate.x - ball.x);
-                    ball.vx = Math.cos(ang) * 14.5;
-                    ball.vy = Math.sin(ang) * 14.5;
-                    ball.superShot = true;
-                    this.callbacks.onBallTouch(player);
-                }
+        player.specialActive = SPECIAL_DURATION;
+        if (player.name === 'Helinho') {
+            const mate = players.find((m) => m.team === player.team && m.id !== player.id);
+            if (mate && Math.hypot(ball.x - player.x, ball.y - player.y) < 130) {
+                const ang = Math.atan2(mate.y - ball.y, mate.x - ball.x);
+                ball.vx = Math.cos(ang) * 14.5;
+                ball.vy = Math.sin(ang) * 14.5;
+                ball.superShot = true;
+                this.callbacks.onBallTouch(player);
             }
-        } else {
-            player.specialActive = 4.0;
-            if (player.name === 'Sergio' || player.name === 'Elias') {
-                player.dribbleTimer = 1.2;
-                player.vx += player.facing * 5.5;
-            } else if (player.name === 'Leo') {
-                const distBall = Math.hypot(ball.x - player.x, ball.y - player.y);
-                if (distBall < 140) {
-                    this.performPass(player, players, ball, true);
-                }
-            }
-
+        } else if (player.name === 'Sergio' || player.name === 'Elias') {
+            player.dribbleTimer = 1.2;
+            player.vx += player.facing * 5.5;
+        } else if (player.name === 'Leo') {
             const distBall = Math.hypot(ball.x - player.x, ball.y - player.y);
-            if (distBall < 70) {
-                this.shootAtGoal(player, ball, true);
+            if (distBall < 140) {
+                this.performPass(player, players, ball, true);
             }
+        }
+
+        const distBall = Math.hypot(ball.x - player.x, ball.y - player.y);
+        if (distBall < 70) {
+            this.shootAtGoal(player, ball, true);
         }
 
         this.sfx.special();
@@ -118,7 +118,9 @@ export class PhysicsEngine {
             }
             if (mx !== 0) p.facing = mx > 0 ? 1 : -1;
 
-            const turboMult = p.name === 'Helinho' && p.specialActive > 0 ? 1.55 : 1.0;
+            const turboMult = (p.name === 'Helinho' || p.name === 'Sergio') && p.specialActive > 0
+                ? 1.55
+                : 1.0;
             const accel = p.stats.accel * turboMult;
             const maxSpd = p.stats.maxSpeed * turboMult;
 
@@ -178,15 +180,19 @@ export class PhysicsEngine {
                     b.x += nx * overlap;
                     b.y += ny * overlap;
 
-                    if (a.name === 'Lucas' && a.team !== b.team && Math.hypot(a.vx, a.vy) > 2.2) {
-                        b.vx += nx * 6.5;
-                        b.vy += ny * 6.5;
-                        b.fallenTimer = 0.65;
+                    if (a.team !== b.team && Math.hypot(a.vx, a.vy) > 2.2
+                        && (a.name === 'Lucas' || (a.name === 'Sergio' && a.specialActive > 0))) {
+                        const strength = a.name === 'Sergio' ? 1.75 : 1;
+                        b.vx += nx * 6.5 * strength;
+                        b.vy += ny * 6.5 * strength;
+                        b.fallenTimer = 0.65 * strength;
                         this.callbacks.onParticles(b.x, b.y, '#84cc16', 8);
-                    } else if (b.name === 'Lucas' && b.team !== a.team && Math.hypot(b.vx, b.vy) > 2.2) {
-                        a.vx -= nx * 6.5;
-                        a.vy -= ny * 6.5;
-                        a.fallenTimer = 0.65;
+                    } else if (b.team !== a.team && Math.hypot(b.vx, b.vy) > 2.2
+                        && (b.name === 'Lucas' || (b.name === 'Sergio' && b.specialActive > 0))) {
+                        const strength = b.name === 'Sergio' ? 1.75 : 1;
+                        a.vx -= nx * 6.5 * strength;
+                        a.vy -= ny * 6.5 * strength;
+                        a.fallenTimer = 0.65 * strength;
                         this.callbacks.onParticles(a.x, a.y, '#84cc16', 8);
                     }
                 }
@@ -196,7 +202,7 @@ export class PhysicsEngine {
         ball.update(dt);
 
         players.forEach((p) => {
-            if (p.fallenTimer > 0) return;
+            if (p.fallenTimer > 0 || ball.guaranteedGoal) return;
             const dx = ball.x - p.x;
             const dy = ball.y - p.y;
             const dist = Math.hypot(dx, dy);
@@ -210,8 +216,10 @@ export class PhysicsEngine {
 
                 const impact = (p.vx - ball.vx) * nx + (p.vy - ball.vy) * ny;
                 if (impact > 0) {
-                    ball.vx += nx * (impact * 1.2 + 1.5);
-                    ball.vy += ny * (impact * 1.2 + 1.5);
+                    const strength = p.stats.stealPower
+                        * (p.name === 'Sergio' && p.specialActive > 0 ? 1.75 : 1);
+                    ball.vx += nx * (impact * 1.2 * strength + 1.5 * strength);
+                    ball.vy += ny * (impact * 1.2 * strength + 1.5 * strength);
                     p.registerTouch();
                     this.callbacks.onBallTouch(p);
                 }

@@ -11,7 +11,7 @@ export class AIController {
         const ownGoalX = isBlue ? fieldLeft : fieldRight;
 
         const distBall = Math.hypot(ball.x - player.x, ball.y - player.y);
-        if (player.hasDirectGoalShotReady() && distBall < 150) {
+        if (player.canActivateSpecial() && distBall < 150) {
             onActivateSpecial(player);
         }
 

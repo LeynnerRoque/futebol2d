@@ -45,7 +45,13 @@ export class Player {
     }
 
     hasDirectGoalShotReady() {
-        return this.specialUnlocked || this.specialActive > 0;
+        return this.specialActive > 0;
+    }
+
+    canActivateSpecial() {
+        const energyReady = this.stats.unlockType === 'energy'
+            && this.energy >= this.stats.unlockTarget;
+        return this.specialActive <= 0 && (this.specialUnlocked || energyReady);
     }
 
     getHudProgress() {
@@ -53,16 +59,22 @@ export class Player {
             const pct = Math.min(100, (this.touches / this.stats.unlockTarget) * 100);
             return {
                 pct,
-                label: this.specialUnlocked ? 'LIBERADO! CHUTE DIRETO' : `${this.touches}/${this.stats.unlockTarget} toques`,
+                label: this.specialActive > 0
+                    ? `ESPECIAL (${this.specialActive.toFixed(1)}s)`
+                    : this.specialUnlocked ? 'LIBERADO! CHUTE DIRETO' : `${this.touches}/${this.stats.unlockTarget} toques`,
                 ready: this.specialUnlocked || this.specialActive > 0
             };
         }
 
         if (this.stats.unlockType === 'goals') {
-            const pct = this.specialUnlocked ? 100 : 0;
+            const pct = Math.min(100, (this.goals / this.stats.unlockTarget) * 100);
             return {
                 pct,
-                label: this.specialUnlocked ? 'LIBERADO! CHUTE DIRETO' : '0/1 gol p/ liberar',
+                label: this.specialActive > 0
+                    ? `ESPECIAL (${this.specialActive.toFixed(1)}s)`
+                    : this.specialUnlocked
+                        ? 'LIBERADO! CHUTE DIRETO'
+                        : `${this.goals}/${this.stats.unlockTarget} gol p/ liberar`,
                 ready: this.specialUnlocked || this.specialActive > 0
             };
         }
@@ -71,7 +83,7 @@ export class Player {
         return {
             pct: Math.min(100, this.energy),
             label: this.specialActive > 0
-                ? `TURBO (${this.specialActive.toFixed(1)}s)`
+                ? `ESPECIAL (${this.specialActive.toFixed(1)}s)`
                 : ready ? 'PRONTO [E]' : `${Math.floor(this.energy)}%`,
             ready
         };

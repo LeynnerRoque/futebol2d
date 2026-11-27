@@ -9,6 +9,7 @@ export class Ball {
         this.radius = 12;
         this.spin = 0;
         this.superShot = false;
+        this.guaranteedGoal = false;
     }
 
     reset(x = this.startX, y = this.startY) {
@@ -18,6 +19,7 @@ export class Ball {
         this.vy = 0;
         this.spin = 0;
         this.superShot = false;
+        this.guaranteedGoal = false;
     }
 
     update(dt) {

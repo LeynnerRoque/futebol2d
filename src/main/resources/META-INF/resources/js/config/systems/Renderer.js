@@ -255,10 +255,18 @@ export class Renderer {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
             ctx.fillRect(x - 14, y + 16, 28, 7);
 
-            if (p.hasDirectGoalShotReady()) {
+            if (p.specialActive > 0) {
+                const pulse = 0.75 + Math.sin(p.specialActive * 6) * 0.15;
+                ctx.save();
+                ctx.globalAlpha = pulse;
                 ctx.strokeStyle = '#facc15';
                 ctx.lineWidth = 3;
-                ctx.strokeRect(x - 20, y - 34, 40, 54);
+                ctx.shadowColor = '#facc15';
+                ctx.shadowBlur = 14;
+                ctx.beginPath();
+                ctx.ellipse(x, y - 8, 29, 39, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
             }
 
             if (p.fallenTimer > 0) {
