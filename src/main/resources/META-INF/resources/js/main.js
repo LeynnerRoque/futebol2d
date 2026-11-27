@@ -36,6 +36,7 @@ const state = {
     weather: WEATHER_MODES.sunny,
     lineup: { p1: 'Sergio', p2: 'Elias', p3: 'Lucas', p4: 'Helinho', bench: 'Leo' },
     lastTouch: null,
+    concedingTeam: null,
     goalTimer: 0,
     celebration: null,
     particles: [],
@@ -259,6 +260,7 @@ function handleGoal(scoringTeam) {
     if (state.screen === 'GOAL_CELEBRATION') return;
     state.screen = 'GOAL_CELEBRATION';
     state.goalTimer = 3.2;
+    state.concedingTeam = scoringTeam === 'blue' ? 'red' : 'blue';
 
     if (scoringTeam === 'blue') {
         state.scoreBlue += 1;
@@ -316,13 +318,6 @@ function handleGoal(scoringTeam) {
     spawnParticles(ball.x, ball.y, '#facc15', 30);
     updateSpecialHUD();
 
-    if (!state.isGoldenGoal) {
-        setTimeout(() => {
-            if (state.screen === 'GOAL_CELEBRATION') {
-                resetPositions(scoringTeam === 'blue' ? 'red' : 'blue');
-            }
-        }, 3050);
-    }
 }
 
 function stepCelebration(dt) {
@@ -483,6 +478,8 @@ function update(dt) {
             if (state.isGoldenGoal) {
                 finishMatch();
             } else {
+                resetPositions(state.concedingTeam);
+                state.concedingTeam = null;
                 state.screen = 'PLAYING';
                 sfx.whistle(false);
             }

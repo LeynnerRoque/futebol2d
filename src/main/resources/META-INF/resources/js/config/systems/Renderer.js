@@ -150,30 +150,49 @@ export class Renderer {
 
     drawGoalPosts(x, topY, botY) {
         const { ctx } = this;
-        ctx.strokeStyle = 'rgba(255,255,255,0.65)';
-        ctx.setLineDash([8, 8]);
+        const depth = 26;
+        const direction = x < this.bounds.width / 2 ? -1 : 1;
+        const backX = x + direction * depth;
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.22)';
+        ctx.fillRect(Math.min(x, backX), topY, depth, botY - topY);
+        ctx.strokeStyle = 'rgba(226, 232, 240, 0.48)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let y = topY + 8; y < botY; y += 8) {
+            ctx.moveTo(x, y);
+            ctx.lineTo(backX, y);
+        }
+        for (let netX = x + direction * 7; direction > 0 ? netX < backX : netX > backX; netX += direction * 7) {
+            ctx.moveTo(netX, topY);
+            ctx.lineTo(netX, botY);
+        }
+        ctx.stroke();
+
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 7;
+        ctx.lineCap = 'square';
         ctx.beginPath();
         ctx.moveTo(x, topY);
-        ctx.lineTo(x, botY);
+        ctx.lineTo(backX, topY);
+        ctx.moveTo(x, botY);
+        ctx.lineTo(backX, botY);
+        ctx.moveTo(backX, topY);
+        ctx.lineTo(backX, botY);
         ctx.stroke();
-        ctx.setLineDash([]);
 
-        ctx.fillStyle = '#f97316';
+        ctx.strokeStyle = '#f8fafc';
+        ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.moveTo(x - 10, topY + 8);
-        ctx.lineTo(x + 10, topY + 8);
-        ctx.lineTo(x + 4, topY - 12);
-        ctx.lineTo(x - 4, topY - 12);
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(x - 6, topY - 3, 12, 4);
-
-        ctx.fillStyle = '#2563eb';
-        ctx.fillRect(x - 11, botY - 5, 22, 10);
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x - 11, botY - 5, 22, 10);
+        ctx.moveTo(x, topY);
+        ctx.lineTo(backX, topY);
+        ctx.moveTo(x, botY);
+        ctx.lineTo(backX, botY);
+        ctx.moveTo(backX, topY);
+        ctx.lineTo(backX, botY);
+        ctx.stroke();
+        ctx.restore();
     }
 
     drawNPCs(npcs) {
@@ -254,20 +273,6 @@ export class Renderer {
 
             ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
             ctx.fillRect(x - 14, y + 16, 28, 7);
-
-            if (p.specialActive > 0) {
-                const pulse = 0.75 + Math.sin(p.specialActive * 6) * 0.15;
-                ctx.save();
-                ctx.globalAlpha = pulse;
-                ctx.strokeStyle = '#facc15';
-                ctx.lineWidth = 3;
-                ctx.shadowColor = '#facc15';
-                ctx.shadowBlur = 14;
-                ctx.beginPath();
-                ctx.ellipse(x, y - 8, 29, 39, 0, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.restore();
-            }
 
             if (p.fallenTimer > 0) {
                 ctx.translate(x, y + 10);

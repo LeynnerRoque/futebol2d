@@ -264,7 +264,13 @@ export class PhysicsEngine {
         const inGoal = ball.y > goalTop && ball.y < goalBot;
         if (ball.x - ball.radius < fieldLeft) {
             if (inGoal) {
-                if (ball.x < fieldLeft - 10) this.callbacks.onGoal('red');
+                if (ball.x < fieldLeft - 10) {
+                    ball.stopAt(
+                        fieldLeft - 18,
+                        Math.max(goalTop + ball.radius, Math.min(goalBot - ball.radius, ball.y))
+                    );
+                    this.callbacks.onGoal('red');
+                }
             } else {
                 ball.x = fieldLeft + ball.radius;
                 ball.vx = Math.abs(ball.vx) * 0.82;
@@ -272,7 +278,13 @@ export class PhysicsEngine {
         }
         if (ball.x + ball.radius > fieldRight) {
             if (inGoal) {
-                if (ball.x > fieldRight + 10) this.callbacks.onGoal('blue');
+                if (ball.x > fieldRight + 10) {
+                    ball.stopAt(
+                        fieldRight + 18,
+                        Math.max(goalTop + ball.radius, Math.min(goalBot - ball.radius, ball.y))
+                    );
+                    this.callbacks.onGoal('blue');
+                }
             } else {
                 ball.x = fieldRight - ball.radius;
                 ball.vx = -Math.abs(ball.vx) * 0.82;

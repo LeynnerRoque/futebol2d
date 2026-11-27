@@ -10,6 +10,7 @@ export class Ball {
         this.spin = 0;
         this.superShot = false;
         this.guaranteedGoal = false;
+        this.isFrozen = false;
     }
 
     reset(x = this.startX, y = this.startY) {
@@ -20,9 +21,19 @@ export class Ball {
         this.spin = 0;
         this.superShot = false;
         this.guaranteedGoal = false;
+        this.isFrozen = false;
+    }
+
+    stopAt(x, y) {
+        this.x = x;
+        this.y = y;
+        this.vx = 0;
+        this.vy = 0;
+        this.isFrozen = true;
     }
 
     update(dt) {
+        if (this.isFrozen) return;
         this.x += this.vx;
         this.y += this.vy;
         this.vx *= 0.982;
