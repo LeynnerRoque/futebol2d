@@ -170,6 +170,7 @@ function syncLineup() {
 
     document.getElementById('lobbyBenchName').textContent = state.lineup.bench;
     document.getElementById('hudBenchName').textContent = state.lineup.bench;
+    updateSpecialDetails(state.lineup.p1, CHARACTER_DB[state.lineup.p1]);
 }
 
 function syncDropdownsFromLineup() {
@@ -179,6 +180,7 @@ function syncDropdownsFromLineup() {
     document.getElementById('p4Select').value = state.lineup.p4;
     document.getElementById('lobbyBenchName').textContent = state.lineup.bench;
     document.getElementById('hudBenchName').textContent = state.lineup.bench;
+    updateSpecialDetails(state.lineup.p1, CHARACTER_DB[state.lineup.p1]);
 }
 
 function spawnPlayers() {
@@ -239,8 +241,7 @@ function updateSpecialHUD() {
     if (!p1) return;
 
     const progress = p1.getHudProgress();
-    document.getElementById('p1HudTitle').textContent = `⚡ ${p1.name.toUpperCase()}:`;
-    document.getElementById('p1SpecialDesc').textContent = `Especial: ${p1.stats.specialDesc}`;
+    updateSpecialDetails(p1.name, p1.stats);
 
     const fill = document.getElementById('p1EnergyFill');
     const status = document.getElementById('p1SpecialStatus');
@@ -254,6 +255,12 @@ function updateSpecialHUD() {
         fill.classList.remove('ready');
         status.style.color = '#facc15';
     }
+}
+
+function updateSpecialDetails(playerName, stats) {
+    document.getElementById('p1HudTitle').textContent = `⚡ ${playerName.toUpperCase()}:`;
+    document.getElementById('p1SpecialName').textContent = stats.specialName;
+    document.getElementById('p1SpecialDesc').textContent = stats.specialDesc;
 }
 
 function handleGoal(scoringTeam) {
